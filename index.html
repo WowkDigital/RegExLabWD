@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RegEx Lab WD — Regular Expressions Course</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@400;600;700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Share+Tech+Mono&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/main.js"></script>
+</head>
+
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="glow-blob blob-1"></div>
+  <div class="glow-blob blob-2"></div>
+  <div class="glow-grid"></div>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-container">
+      <div class="header-left">
+        <button id="sidebar-toggle" class="btn btn-sidebar-toggle" onclick="toggleSidebar()">
+          <i data-lucide="menu"></i>
+        </button>
+        <div class="header-logo">
+          <div class="logo-icon-box">
+            <i data-lucide="code-2" class="logo-icon"></i>
+          </div>
+          <span class="logo-text glow">REGEX<span class="logo-highlight">LAB</span></span>
+        </div>
+        <span class="header-subtitle">// interactive course</span>
+      </div>
+
+      <!-- Top navigation will be injected here dynamically by main.js or placed statically -->
+      <div id="top-nav-container" class="top-nav-container"></div>
+
+      <div class="header-right">
+        <div class="progress-info">
+          <i data-lucide="zap" class="progress-icon"></i>
+          <span id="progress-text">0 / 15 lessons</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar">
+            <div class="progress-fill" id="header-progress"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-layout">
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <span>LEARNING LEVELS</span>
+      </div>
+      <div id="lesson-list" class="lesson-list"></div>
+    </nav>
+
+    <!-- MAIN -->
+    <main class="main" id="main-content">
+      <div id="lesson-content" class="lesson-content-container"></div>
+    </main>
+  </div>
+
+</body>
+
+</html>
