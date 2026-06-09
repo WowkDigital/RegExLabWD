@@ -1,6 +1,7 @@
 import { standard } from './themes/standard.js';
 import { liminal } from './themes/liminal.js';
 import { cyberpunk } from './themes/cyberpunk.js';
+import { celeste } from './themes/celeste.js';
 
 export const THEMES = {
   liminal: {
@@ -17,6 +18,11 @@ export const THEMES = {
     id: 'cyberpunk',
     name: 'Cyberpunk Grid',
     lessons: cyberpunk
+  },
+  celeste: {
+    id: 'celeste',
+    name: 'Celeste (video game)',
+    lessons: celeste
   }
 };
 
