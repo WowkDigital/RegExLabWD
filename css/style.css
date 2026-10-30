@@ -1292,3 +1292,176 @@ body::before {
 .theme-selector-container:hover::after {
   border-top-color: var(--accent);
 }
+
+
+/* Sidebar Backdrop on Mobile */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 12, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 85;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+@media (max-width: 1023px) {
+  .sidebar-backdrop {
+    display: block;
+  }
+  .sidebar-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* Zero-length match indicator (e.g. ^, $, \b, lookaheads) */
+.zero-width-match {
+  display: inline-block;
+  width: 3px;
+  height: 1.25em;
+  background: var(--amber);
+  margin: 0 1px;
+  vertical-align: middle;
+  border-radius: 1px;
+  box-shadow: 0 0 8px var(--amber);
+  animation: pulse-zero-match 1.2s infinite alternate;
+}
+
+@keyframes pulse-zero-match {
+  0% { opacity: 0.6; transform: scaleY(0.9); }
+  100% { opacity: 1; transform: scaleY(1.1); box-shadow: 0 0 12px var(--amber); }
+}
+
+
+/* Target Token formatting inside Task descriptions */
+.target-token {
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(0, 229, 255, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-block;
+  margin: 0 2px;
+  letter-spacing: 0.2px;
+}
+
+/* Technical Overview Card */
+.technical-overview-card {
+  background: rgba(0, 229, 255, 0.04);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-top: 8px;
+}
+
+/* Cyberpunk Narrative Briefing Card */
+.cyberpunk-narrative-card {
+  background: rgba(191, 85, 236, 0.04);
+  border: 1px solid rgba(191, 85, 236, 0.2);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-top: 8px;
+}
+
+/* ECTS Badge & Pill */
+.ects-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 179, 0, 0.1);
+  color: var(--amber);
+  border: 1px solid rgba(255, 179, 0, 0.3);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.ects-pill {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: rgba(255, 179, 0, 0.15);
+  color: var(--amber);
+  border: 1px solid rgba(255, 179, 0, 0.4);
+  letter-spacing: 1px;
+}
+
+/* Learning Mode Switcher */
+.mode-switch-container {
+  display: flex;
+  align-items: center;
+  background: var(--surface2-solid);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.mode-btn {
+  font-size: 11px;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text3);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.mode-btn:hover {
+  color: var(--text);
+}
+
+.mode-btn.active {
+  background: rgba(0, 229, 255, 0.15);
+  color: var(--accent);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.15);
+}
+
+/* Deep Dive Box */
+.deep-dive-box {
+  background: rgba(15, 32, 53, 0.4);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  border-radius: 8px;
+  padding: 18px 20px;
+  margin-top: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.deep-dive-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--accent);
+}
+
+/* Extended Task Badge */
+.extended-task-badge {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(191, 85, 236, 0.15);
+  color: var(--purple);
+  border: 1px solid rgba(191, 85, 236, 0.4);
+  letter-spacing: 0.8px;
+}

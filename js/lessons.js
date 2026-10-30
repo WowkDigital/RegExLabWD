@@ -1,23 +1,23 @@
+import { cyberpunk } from './themes/cyberpunk.js';
 import { standard } from './themes/standard.js';
 import { liminal } from './themes/liminal.js';
-import { cyberpunk } from './themes/cyberpunk.js';
 import { celeste } from './themes/celeste.js';
 
 export const THEMES = {
-  liminal: {
-    id: 'liminal',
-    name: 'Liminal Space',
-    lessons: liminal
+  cyberpunk: {
+    id: 'cyberpunk',
+    name: 'Cyberpunk Grid (Primary)',
+    lessons: cyberpunk
   },
   standard: {
     id: 'standard',
     name: 'Standard Developer',
     lessons: standard
   },
-  cyberpunk: {
-    id: 'cyberpunk',
-    name: 'Cyberpunk Grid',
-    lessons: cyberpunk
+  liminal: {
+    id: 'liminal',
+    name: 'Liminal Space',
+    lessons: liminal
   },
   celeste: {
     id: 'celeste',
@@ -28,11 +28,11 @@ export const THEMES = {
 
 export const LESSONS = [];
 
-export let currentThemeId = localStorage.getItem('regex_theme') || 'liminal';
+export let currentThemeId = localStorage.getItem('regex_theme') || 'cyberpunk';
 
 export function setTheme(themeId) {
   if (!THEMES[themeId]) {
-    themeId = 'liminal';
+    themeId = 'cyberpunk';
   }
   currentThemeId = themeId;
   localStorage.setItem('regex_theme', themeId);
@@ -41,5 +41,5 @@ export function setTheme(themeId) {
   LESSONS.splice(0, LESSONS.length, ...selectedTheme.lessons);
 }
 
-// Initialize on load
+// Initialize on load with Cyberpunk as primary
 setTheme(currentThemeId);

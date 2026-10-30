@@ -1,82 +1,115 @@
-import { escapeHtml } from './utils.js';
+import { escapeHtml, debounce } from './utils.js';
 
 const sections = [
   {
-    title: 'Character Classes', color: 'accent', items: [
-      ['.', 'Any character (except \\n)'],
+    id: 'char-classes',
+    title: 'Character Classes', 
+    color: 'accent', 
+    items: [
+      ['.', 'Any character (except newline \\n)'],
       ['\\d', 'Digit [0-9]'],
-      ['\\D', 'Non-digit'],
+      ['\\D', 'Non-digit [^0-9]'],
       ['\\w', 'Word character [a-zA-Z0-9_]'],
       ['\\W', 'Non-word character'],
-      ['\\s', 'Whitespace character'],
+      ['\\s', 'Whitespace character (spaces, tabs, newlines)'],
       ['\\S', 'Non-whitespace character'],
-      ['[abc]', 'Class: a, b, or c'],
-      ['[^abc]', 'Negated class'],
-      ['[a-z]', 'Range of letters'],
-      ['\\p{L}', 'Unicode letter (u flag)'],
+      ['[abc]', 'Character set: a, b, or c'],
+      ['[^abc]', 'Negated set: any character except a, b, or c'],
+      ['[a-z]', 'Character range: lowercase a through z'],
+      ['\\p{L}', 'Unicode letter (requires u flag)'],
     ]
   },
   {
-    title: 'Anchors', color: 'green', items: [
-      ['^', 'Beginning of line/string'],
-      ['$', 'End of line/string'],
-      ['\\b', 'Word boundary'],
+    id: 'anchors',
+    title: 'Anchors', 
+    color: 'green', 
+    items: [
+      ['^', 'Beginning of line / string'],
+      ['$', 'End of line / string'],
+      ['\\b', 'Word boundary (between \\w and \\W)'],
       ['\\B', 'Non-word boundary'],
-      ['\\A', 'Start of string (PCRE)'],
-      ['\\Z', 'End of string (PCRE)'],
+      ['\\A / \\Z', 'String start/end anchors (PCRE/Python specific)', true],
     ]
   },
   {
-    title: 'Quantifiers', color: 'amber', items: [
-      ['*', '0 or more (greedy)'],
-      ['+', '1 or more (greedy)'],
-      ['?', '0 or 1 (optional)'],
-      ['{n}', 'Exactly n times'],
-      ['{n,}', 'At least n times'],
-      ['{n,m}', 'From n to m times'],
-      ['*?', '0 or more (lazy)'],
-      ['+?', '1 or more (lazy)'],
-      ['??', '0 or 1 (lazy)'],
+    id: 'quantifiers',
+    title: 'Quantifiers', 
+    color: 'amber', 
+    items: [
+      ['*', '0 or more occurrences (greedy)'],
+      ['+', '1 or more occurrences (greedy)'],
+      ['?', '0 or 1 occurrence (optional)'],
+      ['{n}', 'Exactly n occurrences'],
+      ['{n,}', 'At least n occurrences'],
+      ['{n,m}', 'Between n and m occurrences'],
+      ['*?', '0 or more occurrences (lazy / non-greedy)'],
+      ['+?', '1 or more occurrences (lazy / non-greedy)'],
+      ['??', '0 or 1 occurrence (lazy / non-greedy)'],
     ]
   },
   {
-    title: 'Groups', color: 'purple', items: [
+    id: 'groups',
+    title: 'Groups & Alternation', 
+    color: 'purple', 
+    items: [
       ['(abc)', 'Capturing group'],
       ['(?:abc)', 'Non-capturing group'],
-      ['(?<name>)', 'Named group'],
-      ['\\1', 'Backreference #1'],
-      ['\\k<name>', 'Named backreference'],
-      ['a|b', 'Alternation: a OR b'],
+      ['(?<name>abc)', 'Named capturing group'],
+      ['\\1', 'Backreference to capturing group #1'],
+      ['\\k<name>', 'Backreference to named group'],
+      ['a|b', 'Alternation: match branch a OR branch b'],
     ]
   },
   {
-    title: 'Lookaround', color: 'red', items: [
-      ['(?=abc)', 'Positive lookahead'],
-      ['(?!abc)', 'Negative lookahead'],
-      ['(?<=abc)', 'Positive lookbehind'],
-      ['(?<!abc)', 'Negative lookbehind'],
+    id: 'lookaround',
+    title: 'Lookaround Assertions', 
+    color: 'red', 
+    items: [
+      ['(?=abc)', 'Positive lookahead: followed by abc'],
+      ['(?!abc)', 'Negative lookahead: NOT followed by abc'],
+      ['(?<=abc)', 'Positive lookbehind: preceded by abc'],
+      ['(?<!abc)', 'Negative lookbehind: NOT preceded by abc'],
     ]
   },
   {
-    title: 'Flags', color: 'text', items: [
-      ['g', 'Global — find all matches'],
-      ['i', 'Case-insensitive'],
-      ['m', 'Multiline — ^ and $ match per line'],
-      ['s', 'DotAll — . matches newline \\n'],
-      ['u', 'Unicode support'],
-      ['d', 'HasIndices (match indices)'],
+    id: 'flags',
+    title: 'Flags', 
+    color: 'text', 
+    items: [
+      ['g', 'Global: find all matches rather than stopping at the first'],
+      ['i', 'Case-insensitive matching'],
+      ['m', 'Multiline: ^ and $ match line boundaries'],
+      ['s', 'DotAll: dot (.) matches newline \\n as well'],
+      ['u', 'Unicode: enable full UTF-16 surrogate handling and \\p{...}'],
+      ['d', 'HasIndices: expose .indices start/end match offsets'],
+      ['y', 'Sticky: match strictly at the lastIndex cursor position'],
     ]
   },
   {
-    title: 'JS API', color: 'accent', items: [
-      ['re.test(str)', 'Returns true/false'],
-      ['str.match(re)', 'Array of matches'],
-      ['str.matchAll(re)', 'Iterator of all matches'],
-      ['str.replace(re, s)', 'Replace matches with string'],
-      ['str.search(re)', 'Index of first match'],
-      ['str.split(re)', 'Split string by pattern'],
+    id: 'js-api',
+    title: 'JavaScript API', 
+    color: 'accent', 
+    isCodeOnly: true,
+    items: [
+      ['re.test(str)', 'Returns boolean indicating match presence'],
+      ['str.match(re)', 'Returns array of match results'],
+      ['str.matchAll(re)', 'Returns iterator of all match objects with groups'],
+      ['str.replace(re, sub)', 'Replaces matches with replacement string/function'],
+      ['str.search(re)', 'Returns index of first match or -1'],
+      ['str.split(re)', 'Splits string into array by pattern separator'],
     ]
   },
+];
+
+const POPULAR_PATTERNS = [
+  ['Email (RFC 5322 standard)', '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}'],
+  ['URL (HTTP/HTTPS)', 'https?:\\/\\/[\\w.-]+(?:\\/[\\S]*)?'],
+  ['IPv4 Address', '\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b'],
+  ['Hex Color Code', '#[0-9a-fA-F]{3,6}'],
+  ['ISO Date (YYYY-MM-DD)', '\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01])'],
+  ['Phone Number (E.164 / Int.)', '(?:\\+?\\d{1,3}[\\s-]?)?\\(?\\d{3}\\)?[\\s-]?\\d{3}[\\s-]?\\d{3,4}'],
+  ['PESEL (Polish National ID)', '\\b\\d{2}(?:0[1-9]|1[0-2]|2[1-9]|3[0-2])(?:0[1-9]|[12]\\d|3[01])\\d{5}\\b'],
+  ['NIP (Tax Identification)', '\\b(?:\\d{3}-\\d{3}-\\d{2}-\\d{2}|\\d{3}-\\d{2}-\\d{2}-\\d{3}|\\d{10})\\b'],
 ];
 
 /**
@@ -92,13 +125,13 @@ export function renderCheatsheet() {
         <h1 style="font-family:'Orbitron',sans-serif;font-size:22px;color:var(--accent);margin-bottom:8px;font-weight:700;">
           <i data-lucide="scroll-text" style="width:22px;height:22px;display:inline-block;vertical-align:-3px;margin-right:8px;color:var(--accent);"></i>RegEx Cheatsheet
         </h1>
-        <p style="color:var(--text2);font-size:14px;line-height:1.6;">Complete reference card — all essential constructs and popular patterns.</p>
+        <p style="color:var(--text2);font-size:14px;line-height:1.6;">Quick reference guide for JavaScript Regular Expressions and production-ready patterns.</p>
       </div>
 
       <!-- SEARCH BAR -->
       <div class="cheatsheet-search-wrapper">
         <i data-lucide="search" class="cheatsheet-search-icon"></i>
-        <input type="text" id="cs-search" class="cheatsheet-search-input" placeholder="Search construct (e.g. character classes, anchors, email)..." oninput="filterCheatsheet()">
+        <input type="text" id="cs-search" class="cheatsheet-search-input" placeholder="Search tokens, symbols, flags, anchors..." aria-label="Search cheatsheet" oninput="debouncedFilterCheatsheet()">
       </div>
 
       <div class="cheatsheet-grid">
@@ -108,20 +141,22 @@ export function renderCheatsheet() {
               <span>${sec.title}</span>
             </div>
             <div class="cheatsheet-card-content">
-              ${sec.items.map(([sym, desc]) => {
+              ${sec.items.map(([sym, desc, disableTest]) => {
+                const canTest = !sec.isCodeOnly && !disableTest;
                 return `
                 <div class="cheatsheet-item">
                   <div class="cheatsheet-item-left">
                     <code class="cheatsheet-item-code">${escapeHtml(sym)}</code>
-                    <span class="cheatsheet-item-desc" title="${escapeHtml(desc)}">${desc}</span>
+                    <span class="cheatsheet-item-desc" title="${escapeHtml(desc)}">${escapeHtml(desc)}</span>
                   </div>
                   <div class="cheatsheet-item-actions">
-                    <button class="cheatsheet-action-btn" title="Copy pattern" data-pattern="${escapeHtml(sym)}" onclick="copyPattern(this.dataset.pattern)">
+                    <button class="cheatsheet-action-btn copy-btn" title="Copy to clipboard" aria-label="Copy ${escapeHtml(sym)}" data-text="${escapeHtml(sym)}">
                       <i data-lucide="copy" style="width:12px;height:12px;"></i>
                     </button>
-                    <button class="cheatsheet-action-btn" title="Test in Playground" data-pattern="${escapeHtml(sym)}" onclick="testPattern(this.dataset.pattern)">
+                    ${canTest ? `
+                    <button class="cheatsheet-action-btn test-btn" title="Test in Playground" aria-label="Test ${escapeHtml(sym)} in Playground" data-pattern="${escapeHtml(sym)}">
                       <i data-lucide="flask-conical" style="width:12px;height:12px;"></i>
-                    </button>
+                    </button>` : ''}
                   </div>
                 </div>`;
               }).join('')}
@@ -132,30 +167,21 @@ export function renderCheatsheet() {
       <!-- MOST POPULAR PATTERNS -->
       <div class="glass-card" id="popular-patterns-section" style="margin-top:28px; padding:24px;">
         <div style="font-family:'Orbitron',sans-serif; font-size:13px; color:var(--amber); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px; display:flex; align-items:center; gap:8px; font-weight:700;">
-          <i data-lucide="star" style="width:15px;height:15px;color:var(--amber);"></i> Practical Patterns Ready to Use
+          <i data-lucide="star" style="width:15px;height:15px;color:var(--amber);"></i> Production-Ready Patterns
         </div>
         <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap:12px;">
-          ${[
-            ['Email (simple)', '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}'],
-            ['URL', 'https?:\\/\\/[\\w.-]+(?:\\/[\\S]*)?'],
-            ['IP v4', '\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b'],
-            ['Hex Color', '#[0-9a-fA-F]{3,6}'],
-            ['Date YYYY-MM-DD', '\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01])'],
-            ['Phone (PL)', '(?:\\+?48[\\s-]?)?[0-9]{3}[\\s-]?[0-9]{3}[\\s-]?[0-9]{3}'],
-            ['PESEL (Polish ID)', '\\d{2}(?:0[1-9]|[12]\\d|3[01])(?:0[1-9]|[12]\\d|3[01])\\d{5}'],
-            ['NIP (Polish Tax ID)', '[0-9]{3}-[0-9]{2}-[0-9]{2}-[0-9]{3}'],
-          ].map(([name, pat]) => {
+          ${POPULAR_PATTERNS.map(([name, pat]) => {
             return `
             <div class="popular-pattern-card" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 16px; background:var(--surface2-solid); border:1px solid var(--border); border-radius:8px; transition:all 0.2s;">
                <div style="min-width:0; flex:1;">
-                <span class="popular-pattern-name" style="color:var(--text3); font-size:11px; text-transform:uppercase; font-family:'Orbitron',sans-serif; letter-spacing:0.5px; font-weight:600; display:block; margin-bottom:4px;">${name}</span>
+                <span class="popular-pattern-name" style="color:var(--text3); font-size:11px; text-transform:uppercase; font-family:'Orbitron',sans-serif; letter-spacing:0.5px; font-weight:600; display:block; margin-bottom:4px;">${escapeHtml(name)}</span>
                 <code class="popular-pattern-code" style="color:var(--accent); font-size:12px; font-family:'JetBrains Mono',monospace; word-break:break-all; display:block;">${escapeHtml(pat)}</code>
               </div>
               <div style="display:flex; gap:6px;">
-                <button class="btn btn-ghost" style="padding:6px; border-radius:6px;" title="Copy pattern" data-pattern="${escapeHtml(pat)}" onclick="copyPattern(this.dataset.pattern)">
+                <button class="btn btn-ghost copy-btn" style="padding:6px; border-radius:6px;" title="Copy pattern" aria-label="Copy ${escapeHtml(name)}" data-text="${escapeHtml(pat)}">
                   <i data-lucide="copy" style="width:13px;height:13px;"></i>
                 </button>
-                <button class="btn btn-ghost" style="padding:6px; border-radius:6px;" title="Test in Playground" data-pattern="${escapeHtml(pat)}" onclick="testPattern(this.dataset.pattern)">
+                <button class="btn btn-ghost test-btn" style="padding:6px; border-radius:6px;" title="Test in Playground" aria-label="Test ${escapeHtml(name)} in Playground" data-pattern="${escapeHtml(pat)}">
                   <i data-lucide="flask-conical" style="width:13px;height:13px;"></i>
                 </button>
               </div>
@@ -164,6 +190,14 @@ export function renderCheatsheet() {
         </div>
       </div>
     </div>`;
+
+  // Attach event handlers cleanly
+  main.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.onclick = () => copyPattern(btn.dataset.text);
+  });
+  main.querySelectorAll('.test-btn').forEach(btn => {
+    btn.onclick = () => testPattern(btn.dataset.pattern);
+  });
 
   lucide.createIcons();
 }
@@ -181,7 +215,7 @@ export function filterCheatsheet() {
   cards.forEach(card => {
     const headerEl = card.querySelector('.cheatsheet-card-header');
     if (!headerEl) return;
-    
+
     const cardTitle = headerEl.textContent.toLowerCase();
     const items = card.querySelectorAll('.cheatsheet-item');
     let cardHasMatches = cardTitle.includes(query);
@@ -222,19 +256,19 @@ export function filterCheatsheet() {
     }
   });
 
-  // Hide the entire popular patterns card if no patterns match
   const popularSection = document.getElementById('popular-patterns-section');
   if (popularSection) {
     popularSection.style.display = (query === '' || visiblePopularCount > 0) ? '' : 'none';
   }
 }
 
+export const debouncedFilterCheatsheet = debounce(filterCheatsheet, 100);
+
 /**
- * Copy a pattern to the clipboard.
+ * Copy text to clipboard and show toast feedback.
  */
 export function copyPattern(text) {
   navigator.clipboard.writeText(text).then(() => {
-    // Create custom toast alert
     const toast = document.createElement('div');
     toast.style.position = 'fixed';
     toast.style.bottom = '24px';
@@ -252,7 +286,7 @@ export function copyPattern(text) {
     toast.style.alignItems = 'center';
     toast.style.gap = '8px';
     toast.innerHTML = `<i data-lucide="check" style="width:14px;height:14px;"></i> Copied to clipboard!`;
-    
+
     document.body.appendChild(toast);
     lucide.createIcons();
     setTimeout(() => {
@@ -268,7 +302,9 @@ export function copyPattern(text) {
  * Transfer a pattern to the playground and switch view.
  */
 export function testPattern(pat) {
-  window.setView('playground');
+  if (window.setView) {
+    window.setView('playground');
+  }
   const patInput = document.getElementById('pg-pattern');
   const flagsInput = document.getElementById('pg-flags');
   if (patInput) patInput.value = pat;
@@ -279,5 +315,6 @@ export function testPattern(pat) {
 // Bind to window for HTML inline event handlers
 window.renderCheatsheet = renderCheatsheet;
 window.filterCheatsheet = filterCheatsheet;
+window.debouncedFilterCheatsheet = debouncedFilterCheatsheet;
 window.copyPattern = copyPattern;
 window.testPattern = testPattern;

@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RegEx Lab WD — Regular Expressions Course</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="description" content="RegEx Lab — An interactive learning platform and playground for mastering Regular Expressions from basics to Grandmaster level.">
+  <meta name="theme-color" content="#03070c">
+  <title>RegEx Lab — Interactive Regular Expressions Course & Playground</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300e5ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='16 18 22 12 16 6'/%3E%3Cpolyline points='8 6 2 12 8 18'/%3E%3C/svg%3E">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,14 +24,17 @@
   <div class="glow-blob blob-2"></div>
   <div class="glow-grid"></div>
 
+  <!-- Mobile Backdrop Overlay -->
+  <div id="sidebar-backdrop" class="sidebar-backdrop" onclick="closeSidebar()" aria-hidden="true"></div>
+
   <!-- HEADER -->
   <header class="header">
     <div class="header-container">
       <div class="header-left">
-        <button id="sidebar-toggle" class="btn btn-sidebar-toggle" onclick="toggleSidebar()">
+        <button id="sidebar-toggle" class="btn btn-sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle navigation sidebar">
           <i data-lucide="menu"></i>
         </button>
-        <div class="header-logo">
+        <div class="header-logo" role="banner">
           <div class="logo-icon-box">
             <i data-lucide="code-2" class="logo-icon"></i>
           </div>
@@ -38,15 +43,15 @@
         <span class="header-subtitle">// interactive course</span>
       </div>
 
-      <!-- Top navigation will be injected here dynamically by main.js or placed statically -->
-      <div id="top-nav-container" class="top-nav-container"></div>
+      <!-- Top navigation will be injected here dynamically -->
+      <nav id="top-nav-container" class="top-nav-container" aria-label="Main Navigation"></nav>
 
       <div class="header-right">
         <div class="progress-info">
           <i data-lucide="zap" class="progress-icon"></i>
-          <span id="progress-text">0 / 15 lessons</span>
+          <span id="progress-text" aria-live="polite">0 / 15 lessons</span>
         </div>
-        <div class="progress-bar-container">
+        <div class="progress-bar-container" role="progressbar" aria-label="Course completion progress">
           <div class="progress-bar">
             <div class="progress-fill" id="header-progress"></div>
           </div>
@@ -57,7 +62,7 @@
 
   <div class="app-layout">
     <!-- SIDEBAR -->
-    <nav class="sidebar" id="sidebar">
+    <nav class="sidebar" id="sidebar" aria-label="Curriculum levels">
       <div class="sidebar-header">
         <span>LEARNING LEVELS</span>
       </div>
@@ -65,7 +70,7 @@
     </nav>
 
     <!-- MAIN -->
-    <main class="main" id="main-content">
+    <main class="main" id="main-content" tabindex="-1">
       <div id="lesson-content" class="lesson-content-container"></div>
     </main>
   </div>

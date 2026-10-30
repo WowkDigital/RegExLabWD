@@ -15,6 +15,7 @@ js/
     ├── standard.js        # Default Developer Theme
     ├── liminal.js         # Liminal Space Theme
     ├── cyberpunk.js       # Cyberpunk Grid Theme
+    ├── celeste.js         # Celeste Video Game Theme
     └── [new_theme].js     # YOUR NEW THEME FILE
 ```
 

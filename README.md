@@ -1,63 +1,80 @@
-# RegEx Lab — Interaktywny kurs wyrażeń regularnych
+# RegEx Lab — Cyberpunk Edition (Interactive Regular Expressions Course)
 
-RegEx Lab to nowoczesna, interaktywna aplikacja webowa do nauki wyrażeń regularnych (RegEx). Oferuje pełny program nauczania od podstaw (poziom Beginner) aż po zaawansowane techniki optymalizacyjne (poziom Expert). Całość została zaprojektowana w estetyce dark-mode z neonowymi akcentami.
+RegEx Lab is a modern, responsive, and gamified single-page application for mastering JavaScript Regular Expressions (RegEx). Featuring a signature **Cyberpunk Grid** primary aesthetic and curriculum, the platform structures your learning trajectory around practical real-world workload, separating core high-frequency concepts (covering 80% of daily programming) from extended toolkits and specialized hardening protocols.
 
-## 🚀 Główne funkcje
+---
 
-- **12 interaktywnych lekcji** podzielonych na 4 poziomy zaawansowania (Podstawowy, Pośredni, Zaawansowany, Ekspert).
-- **Zadania z walidacją w czasie rzeczywistym** i systemem podpowiedzi.
-- **Playground (Piaskownica)** pozwalająca na testowanie własnych wzorców RegEx na dowolnym tekście, z obsługą grup przechwytujących i gotowymi szablonami (Email, URL, IP itp.).
-- **Ściągawka (Cheatsheet)** stanowiąca podręczne źródło wiedzy o klasach znaków, kotwicach, kwantyfikatorach, lookaroundach oraz popularnych wzorcach (PESEL, NIP, e-mail).
-- **Zapisywanie postępów** automatycznie w pamięci przeglądarki (`localStorage`).
+## 🚀 Key Features & Curriculum Architecture
 
-## 🛠️ Stos technologiczny
+### 1. Pragmatic 3-Tier Curriculum Structure
+Rather than arbitrary levels, lessons are structured around real-world utility:
+- **Section 1: Core Essentials (80% Daily Use)**:
+  - `0. Breaching the Grid`: Literal Pattern Matching & Search Modifiers (`/pattern/gi`) — *1 ECTS*
+  - `1. Subnet Scanning`: Character Classes & Negation (`[abc]`, `[^abc]`, `[0-9]`) — *2 ECTS*
+  - `2. Mainframe Shorthands`: Shorthand Classes (`\d`, `\w`, `\s`) & Boundaries — *2 ECTS*
+  - `3. Data Streams`: Quantifiers & Greediness (`*`, `+`, `?`, `{min,max}`) — *2 ECTS*
+  - `4. Signal Boundaries`: Line & Word Anchors (`^`, `$`, `\b`, `\B`) — *2 ECTS*
+  - `5. Routing & Multiplexing`: Alternation (`|`) & Capturing Groups (`(...)`) — *3 ECTS*
+- **Section 2: Extended Toolkit (Advanced Matching & Transformation)**:
+  - `6. Lookaround Scans`: Positive & Negative Lookahead/Lookbehind (`(?=...)`, `(?!...)`, `(?<=...)`, `(?<!...)`) — *3 ECTS*
+  - `7. Named Registers`: Group Backreferences (`\1`, `\k<name>`) & Memory Slots — *3 ECTS*
+  - `8. Operational Flags`: Multiline (`m`), DotAll (`s`), Unicode (`u`), and Indices (`d`) — *3 ECTS*
+  - `10. Payload Injection`: Dynamic Substitution & Replacements via `str.replace()` — *3 ECTS*
+- **Section 3: Specialized Operations & Engine Hardening**:
+  - `9. Buffer Overflows`: Catastrophic Backtracking & ReDoS Prevention — *4 ECTS*
+  - `11. Credential Scrypts`: Strict Fully-Anchored Production Validation Schemas — *4 ECTS*
+  - `12. Sticky Tokens`: High-Speed Stream Lexing via the Sticky Flag (`/y`) — *4 ECTS*
+  - `13. Quantum Gates`: Emulating Conditional Logic (IF-THEN-ELSE) in RegExp — *5 ECTS*
+  - `14. Icebreaker Protocols`: Deterministic Pattern Audits & CPU Hardening — *5 ECTS*
 
-Aplikacja jest w pełni statycznym projektem typu Single Page Application (SPA):
-- **Struktura**: HTML5
-- **Stylizowanie**: CSS3 (Vanilla CSS + Tailwind CSS dla ułatwienia układu)
-- **Logika**: JavaScript (ES Modules)
-- **Ikony**: Lucide Icons
-- **Czcionki**: JetBrains Mono, Orbitron, Share Tech Mono (Google Fonts)
+### 2. Dual Curriculum Modes: Standard vs. Deep Dive
+- **Standard Mode**: Concise technical overview, key concepts, interactive examples, and 4 core hands-on tasks per lesson.
+- **Deep Dive (Extended Mode)**: Unlocks low-level engine architecture breakdowns (V8 Irregexp internals, DFA/NFA state machines, bitset lookup tables, time complexity proofs) along with **Bonus Deep Dive Tasks**.
 
-## 📁 Struktura katalogów po refaktoryzacji
+### 3. Smart Hint & Progressive Solution Reveal
+- Click **Hint** for a contextual nudge on how to construct the pattern.
+- If you're stuck, the expanded hint reveals a **Reveal Solution** button.
+- Inspect the exact pattern and click **Insert & Test** to automatically populate the input and run live validation.
 
-Projekt został zorganizowany w sposób modułowy:
+### 4. Precision Monospace Token Formatting
+- Tasks explicitly highlight exact search targets using `<code class="target-token">...</code>`, eliminating punctuation ambiguity (e.g., separating sentence-ending periods from regex tokens).
 
-```text
-RegExWD/
-├── css/
-│   └── style.css          # Arkusz stylów CSS (zmienne, kolory, animacje)
-├── js/
-│   ├── lessons.js         # Definicje lekcji, zadań, podpowiedzi i teorii
-│   ├── utils.js           # Pomocnicze funkcje (np. escapeHtml, highlightMatches)
-│   ├── playground.js      # Kontroler widoku i logiki piaskownicy
-│   ├── cheatsheet.js      # Kontroler widoku ściągawki
-│   └── main.js            # Główny plik inicjalizujący aplikację i zarządzający stanem
-├── .gitignore             # Plik ignorowanych plików dla Gita
-├── README.md              # Niniejsza dokumentacja
-└── index.html             # Główny plik wejściowy HTML
-```
+### 5. Workload Points (ECTS Credit System)
+- Replaces traditional difficulty labels with ECTS workload credits (1 to 5 ECTS per lesson, 46 ECTS total).
+- Real-time ECTS progress tracker and fill meter in the header.
 
-## 💻 Jak uruchomić projekt lokalnie?
+### 6. Interactive Playground & Comprehensive Cheatsheet
+- **Playground**: Test custom expressions on live text with capturing group color highlights and match indices inspection.
+- **Cheatsheet**: Quick searchable reference of all JavaScript RegEx constructs and production-ready patterns (RFC email, URL, IPv4, ISO date, PESEL, NIP).
 
-Z uwagi na to, że aplikacja korzysta z **modułów JavaScript (`ES Modules`)**, przeglądarki internetowe ze względów bezpieczeństwa (polityka CORS) blokują wczytywanie skryptów bezpośrednio z protokołu lokalnego `file://` (np. przez podwójne kliknięcie pliku `index.html`). 
+---
 
-Aby uruchomić projekt lokalnie, należy postawić prosty serwer HTTP w katalogu projektu:
+## 🛠️ Tech Stack
 
-### Opcja 1: Używając Pythona (zalecane)
-Otwórz terminal w folderze projektu i wpisz:
+- **Markup**: Semantic HTML5 (ARIA attributes for accessibility)
+- **Styling**: Hand-crafted Vanilla CSS (Custom tokens, animations, responsive sidebar drawer)
+- **Logic**: Modern JavaScript (ES Modules, ECMAScript RegExp flags `d`, `g`, `s`, `u`, `y`)
+- **Icons**: Lucide Icons
+- **Fonts**: Orbitron, JetBrains Mono, Plus Jakarta Sans, Share Tech Mono
+
+---
+
+## 💻 Running the Project Locally
+
+Because the application uses native **JavaScript ES Modules**, modern browsers enforce CORS restrictions on the `file://` protocol. Serve the folder using a local HTTP server:
+
 ```bash
+# Using Python 3:
 python -m http.server 8080
+
+# Or using Node.js npx:
+npx serve -l 8080 .
 ```
-Następnie otwórz przeglądarkę pod adresem: [http://localhost:8080](http://localhost:8080)
 
-### Opcja 2: Używając Node.js i http-server
-Zainstaluj i uruchom serwer komendą:
-```bash
-npx http-server -p 8080
-```
-Następnie przejdź do: [http://localhost:8080](http://localhost:8080)
+Navigate to: [http://localhost:8080](http://localhost:8080)
 
-## 📄 Licencja
+---
 
-Projekt jest udostępniany na licencji MIT. Szczegóły znajdziesz w pliku `LICENSE` (jeśli zdecydujesz się go dodać).
+## 📄 License
+
+Licensed under the [MIT License](https://opensource.org/licenses/MIT).
