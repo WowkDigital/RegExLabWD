@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-accent="cyan">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="RegEx Lab — An interactive learning platform and playground for mastering Regular Expressions from basics to Grandmaster level.">
-  <meta name="theme-color" content="#03070c">
-  <title>RegEx Lab — Interactive Regular Expressions Course & Playground</title>
+  <meta name="description" content="RegEx Lab — An interactive learning platform and playground for mastering Regular Expressions with cyberpunk themes.">
+  <meta name="theme-color" content="#00e5ff">
+  <title>RegEx Lab — Cyberpunk Edition & Interactive RegEx Laboratory</title>
+  <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300e5ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='16 18 22 12 16 6'/%3E%3Cpolyline points='8 6 2 12 8 18'/%3E%3C/svg%3E">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,16 +41,30 @@
           </div>
           <span class="logo-text glow">REGEX<span class="logo-highlight">LAB</span></span>
         </div>
-        <span class="header-subtitle">// interactive course</span>
+        <span class="header-subtitle">// cyberpunk edition</span>
       </div>
 
       <!-- Top navigation will be injected here dynamically -->
       <nav id="top-nav-container" class="top-nav-container" aria-label="Main Navigation"></nav>
 
       <div class="header-right">
+        <!-- NEON COLOR PALETTE PICKER -->
+        <div class="accent-palette-picker" title="Neon Color Profile" aria-label="Neon Color Profiles">
+          <div class="palette-dot dot-cyan active" onclick="setNeonAccent('cyan')" title="Cyber Cyan"></div>
+          <div class="palette-dot dot-green" onclick="setNeonAccent('green')" title="Matrix Green"></div>
+          <div class="palette-dot dot-amber" onclick="setNeonAccent('amber')" title="Amber Circuit"></div>
+          <div class="palette-dot dot-magenta" onclick="setNeonAccent('magenta')" title="Synthwave Magenta"></div>
+          <div class="palette-dot dot-violet" onclick="setNeonAccent('violet')" title="Electric Violet"></div>
+        </div>
+
+        <!-- AUDIO SFX TOGGLE -->
+        <button id="sound-toggle" class="btn-sound-toggle" onclick="toggleAudio()" title="Toggle Neon Audio Feedback" aria-label="Toggle Audio Feedback">
+          <i data-lucide="volume-2" id="sound-icon" style="width:14px;height:14px;"></i>
+        </button>
+
         <div class="progress-info">
           <i data-lucide="zap" class="progress-icon"></i>
-          <span id="progress-text" aria-live="polite">0 / 15 lessons</span>
+          <span id="progress-text" aria-live="polite">0 / 46 ECTS</span>
         </div>
         <div class="progress-bar-container" role="progressbar" aria-label="Course completion progress">
           <div class="progress-bar">
@@ -64,7 +79,7 @@
     <!-- SIDEBAR -->
     <nav class="sidebar" id="sidebar" aria-label="Curriculum levels">
       <div class="sidebar-header">
-        <span>LEARNING LEVELS</span>
+        <span>CURRICULUM ARCHITECTURE</span>
       </div>
       <div id="lesson-list" class="lesson-list"></div>
     </nav>

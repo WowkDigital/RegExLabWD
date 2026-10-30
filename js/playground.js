@@ -1,4 +1,7 @@
-import { escapeHtml, debounce } from './utils.js';
+import { escapeHtml, debounce, generateCodeSnippet } from './utils.js';
+
+let activePlaygroundTab = 'matches'; // 'matches' | 'replace'
+let currentCodeExportLang = 'javascript';
 
 /**
  * Helper to highlight a single match, wrapping internal capturing groups in colored spans.
@@ -17,7 +20,6 @@ function highlightMatchWithGroups(match) {
   const matchStart = match.index;
   const charTags = Array.from({ length: matchText.length }, () => ({ open: '', close: '' }));
 
-  // Iterate from group 1 to group N
   for (let g = 1; g < match.indices.length; g++) {
     const range = match.indices[g];
     if (!range) continue;
@@ -25,7 +27,6 @@ function highlightMatchWithGroups(match) {
     const startInMatch = range[0] - matchStart;
     const endInMatch = range[1] - matchStart;
 
-    // Bounds check and ensure positive length to prevent charTags[-1] crash
     if (startInMatch >= 0 && endInMatch <= matchText.length && endInMatch > startInMatch) {
       charTags[startInMatch].open += `<span class="group-highlight-${g % 5}" title="Group ${g}">`;
       charTags[endInMatch - 1].close = `</span>` + charTags[endInMatch - 1].close;
@@ -105,11 +106,19 @@ export function renderPlayground() {
 
   main.innerHTML = `
     <div class="fade-in">
-      <div style="margin-bottom:24px;">
-        <h1 style="font-family:'Orbitron',sans-serif;font-size:22px;color:var(--accent);margin-bottom:8px;font-weight:700;">
-          <i data-lucide="flask-conical" style="width:22px;height:22px;display:inline-block;vertical-align:-3px;margin-right:8px;color:var(--accent);"></i>RegEx Playground
-        </h1>
-        <p style="color:var(--text2);font-size:14px;line-height:1.6;">Experiment with your own regular expressions on live text with capturing group highlighting and indices inspection.</p>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+        <div>
+          <h1 style="font-family:'Orbitron',sans-serif;font-size:22px;color:var(--accent);margin-bottom:6px;font-weight:700;">
+            <i data-lucide="flask-conical" style="width:22px;height:22px;display:inline-block;vertical-align:-3px;margin-right:8px;color:var(--accent);"></i>RegEx Playground & Laboratory
+          </h1>
+          <p style="color:var(--text2);font-size:14px;line-height:1.6;">Live pattern tester with string substitution preview, ReDoS latency profiler, and multi-language code exporter.</p>
+        </div>
+
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost" onclick="openCodeExportModal()" style="font-size:12px;display:flex;align-items:center;gap:6px;color:var(--accent);">
+            <i data-lucide="code" style="width:14px;height:14px;"></i> Export as Code
+          </button>
+        </div>
       </div>
 
       <div class="playground-grid">
@@ -124,6 +133,17 @@ export function renderPlayground() {
               <input type="text" id="pg-flags" class="flags" value="g" aria-label="Regular expression flags" oninput="debouncedRunPlayground()" style="width:60px;background:transparent;border:none;outline:none;font-family:inherit;">
             </div>
             <div id="pg-error" style="font-size:12px;color:var(--red);margin-top:4px;min-height:16px;font-family:'JetBrains Mono',monospace;"></div>
+
+            <!-- REPLACEMENT STRING INPUT -->
+            <div style="margin-top:14px;">
+              <label for="pg-replacement" class="exercise-label" style="display:flex;justify-content:space-between;">
+                <span>Replacement String (Substitution)</span>
+                <span style="font-size:10px;color:var(--text3);text-transform:none;">Use $1, $2 or $&</span>
+              </label>
+              <div class="pattern-wrapper" style="margin-bottom:4px;">
+                <input type="text" id="pg-replacement" class="pattern-input" placeholder="e.g. [$1] or $<name>" aria-label="Replacement template string" oninput="debouncedRunPlayground()" style="padding:8px 12px;font-family:'JetBrains Mono',monospace;">
+              </div>
+            </div>
             
             <div style="margin-top:16px;">
               <div class="exercise-label">Quick Templates</div>
@@ -133,39 +153,58 @@ export function renderPlayground() {
 
           <div class="glass-card" style="padding:20px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-              <label for="pg-text" class="exercise-label" style="margin-bottom:0;">Test Text</label>
+              <label for="pg-text" class="exercise-label" style="margin-bottom:0;">Target Text Stream</label>
               <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;border-radius:4px;" onclick="clearPlaygroundText()" aria-label="Clear test text">
                 Clear
               </button>
             </div>
             <textarea id="pg-text" class="test-textarea" rows="8" oninput="debouncedRunPlayground()" placeholder="Enter text to test..." aria-label="Test text">The quick brown fox jumps over the lazy dog.
 Pack my box with five dozen liquor jugs.
-How vexingly quick daft zebras jump!
-The five boxing wizards jump quickly.
-Contact: john.doe@domain.com, tel: +1 555-0199.
-Promo code: #00e5ff (2026-06-09).</textarea>
+Contact: netrunner.zero@subgrid.io, tel: +48 555-0199.
+Payload tag: #00e5ff (timestamp: 2026-10-30).</textarea>
           </div>
         </div>
 
         <!-- RIGHT COLUMN: RESULTS -->
         <div class="playground-column">
           <div class="glass-card" style="padding:20px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-              <div class="exercise-label" style="margin-bottom:0;">Matches Preview</div>
-              <div id="pg-match-info"></div>
+            <div class="playground-tab-bar">
+              <button class="pg-sub-tab ${activePlaygroundTab === 'matches' ? 'active' : ''}" onclick="switchPlaygroundTab('matches')">
+                <i data-lucide="eye" style="width:12px;height:12px;display:inline-block;vertical-align:-1px;"></i> Matches & Groups
+              </button>
+              <button class="pg-sub-tab ${activePlaygroundTab === 'replace' ? 'active' : ''}" onclick="switchPlaygroundTab('replace')">
+                <i data-lucide="replace" style="width:12px;height:12px;display:inline-block;vertical-align:-1px;"></i> Replace Output
+              </button>
             </div>
-            <div class="test-display" id="pg-display" style="min-height:120px;"></div>
+
+            <!-- METRICS BAR -->
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+              <div id="pg-match-info"></div>
+              <div id="pg-benchmark-info"></div>
+            </div>
+
+            <!-- TAB 1: MATCHES -->
+            <div id="pg-tab-matches" style="${activePlaygroundTab === 'matches' ? 'display:block;' : 'display:none;'}">
+              <div class="test-display" id="pg-display" style="min-height:120px;"></div>
+            </div>
+
+            <!-- TAB 2: REPLACEMENT -->
+            <div id="pg-tab-replace" style="${activePlaygroundTab === 'replace' ? 'display:block;' : 'display:none;'}">
+              <div class="test-display" id="pg-replace-display" style="min-height:120px;color:var(--green);"></div>
+            </div>
           </div>
 
           <div class="glass-card" id="pg-groups" style="display:none;padding:20px;">
-            <div class="exercise-label">Capturing Groups</div>
+            <div class="exercise-label">Capturing Groups Breakdown</div>
             <div id="pg-groups-list" class="group-caps-container"></div>
           </div>
         </div>
       </div>
+
+      <!-- MODAL CONTAINER FOR CODE EXPORT -->
+      <div id="code-export-modal" style="display:none;"></div>
     </div>`;
 
-  // Render quick pattern buttons cleanly without inline JS escaping quirks
   const qBox = document.getElementById('quick-patterns-box');
   if (qBox) {
     qBox.innerHTML = '';
@@ -182,9 +221,20 @@ Promo code: #00e5ff (2026-06-09).</textarea>
   runPlayground();
 }
 
-/**
- * Loads a quick pattern preset into the inputs.
- */
+export function switchPlaygroundTab(tab) {
+  activePlaygroundTab = tab;
+  const tabMatches = document.getElementById('pg-tab-matches');
+  const tabReplace = document.getElementById('pg-tab-replace');
+  document.querySelectorAll('.pg-sub-tab').forEach((b, i) => {
+    b.classList.toggle('active', (tab === 'matches' && i === 0) || (tab === 'replace' && i === 1));
+  });
+
+  if (tabMatches && tabReplace) {
+    tabMatches.style.display = tab === 'matches' ? 'block' : 'none';
+    tabReplace.style.display = tab === 'replace' ? 'block' : 'none';
+  }
+}
+
 export function loadQuickPattern(pat, flags) {
   const patInput = document.getElementById('pg-pattern');
   const flagsInput = document.getElementById('pg-flags');
@@ -193,9 +243,6 @@ export function loadQuickPattern(pat, flags) {
   runPlayground();
 }
 
-/**
- * Clears the playground test textarea.
- */
 export function clearPlaygroundText() {
   const textEl = document.getElementById('pg-text');
   if (textEl) {
@@ -205,15 +252,18 @@ export function clearPlaygroundText() {
 }
 
 /**
- * Runs the evaluation in real time.
+ * Runs evaluation with performance profiler.
  */
 export function runPlayground() {
   const patternEl = document.getElementById('pg-pattern');
   const flagsEl = document.getElementById('pg-flags');
   const textEl = document.getElementById('pg-text');
+  const replacementEl = document.getElementById('pg-replacement');
   const display = document.getElementById('pg-display');
+  const replaceDisplay = document.getElementById('pg-replace-display');
   const errorEl = document.getElementById('pg-error');
   const matchInfo = document.getElementById('pg-match-info');
+  const benchmarkInfo = document.getElementById('pg-benchmark-info');
   const wrap = document.getElementById('pg-wrap');
 
   if (!patternEl || !flagsEl || !textEl || !display) return;
@@ -221,11 +271,14 @@ export function runPlayground() {
   const pattern = patternEl.value;
   const flags = flagsEl.value;
   const text = textEl.value;
+  const replacement = replacementEl ? replacementEl.value : '';
 
   if (!pattern) {
     display.innerHTML = escapeHtml(text);
+    if (replaceDisplay) replaceDisplay.textContent = text;
     if (errorEl) errorEl.textContent = '';
     if (matchInfo) matchInfo.innerHTML = '';
+    if (benchmarkInfo) benchmarkInfo.innerHTML = '';
     if (wrap) wrap.classList.remove('error');
     const groupsEl = document.getElementById('pg-groups');
     if (groupsEl) groupsEl.style.display = 'none';
@@ -233,6 +286,8 @@ export function runPlayground() {
   }
 
   let re;
+  const tStart = performance.now();
+
   try {
     const safeFlags = flags.includes('d') ? flags : flags + 'd';
     re = new RegExp(pattern, safeFlags);
@@ -242,12 +297,24 @@ export function runPlayground() {
     if (errorEl) errorEl.textContent = '⚠ ' + e.message;
     if (wrap) wrap.classList.add('error');
     display.innerHTML = escapeHtml(text);
+    if (replaceDisplay) replaceDisplay.textContent = text;
     const groupsEl = document.getElementById('pg-groups');
     if (groupsEl) groupsEl.style.display = 'none';
+    if (benchmarkInfo) benchmarkInfo.innerHTML = '';
     return;
   }
 
   display.innerHTML = highlightAllPlaygroundMatches(text, re);
+
+  // Replacement preview
+  if (replaceDisplay) {
+    try {
+      const repRe = new RegExp(pattern, flags.includes('g') ? flags : flags + 'g');
+      replaceDisplay.textContent = text.replace(repRe, replacement);
+    } catch {
+      replaceDisplay.textContent = text;
+    }
+  }
 
   const safeFlags = flags.includes('g') ? flags : flags + 'g';
   const matchFlags = safeFlags.includes('d') ? safeFlags : safeFlags + 'd';
@@ -255,7 +322,21 @@ export function runPlayground() {
   try {
     allMatches = [...text.matchAll(new RegExp(re.source, matchFlags))];
   } catch (e) {
-    // Fallback if matchAll fails
+    // Fallback
+  }
+
+  const tEnd = performance.now();
+  const latency = (tEnd - tStart).toFixed(2);
+
+  if (benchmarkInfo) {
+    const isSlow = latency > 15;
+    benchmarkInfo.innerHTML = `
+      <span class="benchmark-badge" style="${isSlow ? 'color:var(--amber);border-color:var(--amber);' : ''}">
+        <i data-lucide="${isSlow ? 'alert-triangle' : 'zap'}" style="width:11px;height:11px;"></i>
+        ${latency} ms ${isSlow ? '(high backtracking)' : ''}
+      </span>
+    `;
+    lucide.createIcons();
   }
 
   if (matchInfo) {
@@ -264,7 +345,7 @@ export function runPlayground() {
       : `<span class="match-badge no-match">No matches</span>`;
   }
 
-  // Show captured groups details
+  // Capturing groups
   const hasGroups = allMatches.some(m => m.length > 1 || m.groups);
   const groupsEl = document.getElementById('pg-groups');
   const groupsList = document.getElementById('pg-groups-list');
@@ -304,11 +385,101 @@ export function runPlayground() {
   }
 }
 
-export const debouncedRunPlayground = debounce(runPlayground, 120);
+export const debouncedRunPlayground = debounce(runPlayground, 100);
 
-// Bind to window for HTML inline event handlers
+// ============================================================
+// CODE EXPORT MODAL
+// ============================================================
+export function openCodeExportModal() {
+  const modal = document.getElementById('code-export-modal');
+  if (!modal) return;
+
+  const patternEl = document.getElementById('pg-pattern');
+  const flagsEl = document.getElementById('pg-flags');
+  const pat = patternEl ? patternEl.value : '';
+  const flags = flagsEl ? flagsEl.value : '';
+
+  renderCodeModalContent(pat, flags, currentCodeExportLang);
+  modal.style.display = 'block';
+  lucide.createIcons();
+}
+
+export function closeCodeExportModal() {
+  const modal = document.getElementById('code-export-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+export function selectExportLanguage(lang) {
+  currentCodeExportLang = lang;
+  const patternEl = document.getElementById('pg-pattern');
+  const flagsEl = document.getElementById('pg-flags');
+  renderCodeModalContent(patternEl ? patternEl.value : '', flagsEl ? flagsEl.value : '', lang);
+  lucide.createIcons();
+}
+
+function renderCodeModalContent(pattern, flags, lang) {
+  const modal = document.getElementById('code-export-modal');
+  if (!modal) return;
+
+  const snippet = generateCodeSnippet(pattern, flags, lang);
+  const languages = [
+    { id: 'javascript', name: 'JavaScript / TS' },
+    { id: 'python', name: 'Python' },
+    { id: 'php', name: 'PHP' },
+    { id: 'go', name: 'Go' },
+    { id: 'java', name: 'Java' }
+  ];
+
+  modal.innerHTML = `
+    <div class="code-export-modal" onclick="if(event.target===this)closeCodeExportModal()">
+      <div class="code-export-dialog">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h3 style="font-family:'Orbitron',sans-serif;color:var(--accent);font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;">
+            <i data-lucide="code" style="width:18px;height:18px;"></i> Export Pattern as Code
+          </h3>
+          <button class="btn btn-ghost" onclick="closeCodeExportModal()" style="padding:4px 8px;">✕</button>
+        </div>
+
+        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+          ${languages.map(l => `
+            <button class="btn ${l.id === lang ? 'btn-primary' : 'btn-ghost'}" style="font-size:11px;padding:6px 12px;" onclick="selectExportLanguage('${l.id}')">
+              ${l.name}
+            </button>
+          `).join('')}
+        </div>
+
+        <div style="position:relative;margin-bottom:16px;">
+          <pre style="background:var(--surface3-solid);border:1px solid var(--border);border-radius:8px;padding:16px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;overflow-x:auto;max-height:280px;line-height:1.6;">${escapeHtml(snippet)}</pre>
+          <button class="btn btn-primary" onclick="copySnippetToClipboard()" style="position:absolute;top:10px;right:10px;font-size:11px;padding:4px 8px;display:flex;align-items:center;gap:4px;">
+            <i data-lucide="copy" style="width:12px;height:12px;"></i> Copy
+          </button>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;">
+          <button class="btn btn-ghost" onclick="closeCodeExportModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+export function copySnippetToClipboard() {
+  const patternEl = document.getElementById('pg-pattern');
+  const flagsEl = document.getElementById('pg-flags');
+  const snippet = generateCodeSnippet(patternEl ? patternEl.value : '', flagsEl ? flagsEl.value : '', currentCodeExportLang);
+  navigator.clipboard.writeText(snippet).then(() => {
+    alert('Code snippet copied to clipboard!');
+  });
+}
+
+// Bind to window
 window.renderPlayground = renderPlayground;
+window.switchPlaygroundTab = switchPlaygroundTab;
 window.loadQuickPattern = loadQuickPattern;
 window.clearPlaygroundText = clearPlaygroundText;
 window.runPlayground = runPlayground;
 window.debouncedRunPlayground = debouncedRunPlayground;
+window.openCodeExportModal = openCodeExportModal;
+window.closeCodeExportModal = closeCodeExportModal;
+window.selectExportLanguage = selectExportLanguage;
+window.copySnippetToClipboard = copySnippetToClipboard;

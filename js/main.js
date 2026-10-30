@@ -1,5 +1,14 @@
 import { LESSONS, THEMES, setTheme, currentThemeId } from './lessons.js';
-import { escapeHtml, highlightMatches, applyRegex, debounce } from './utils.js';
+import { 
+  escapeHtml, 
+  highlightMatches, 
+  applyRegex, 
+  debounce, 
+  playSuccessChime, 
+  isAudioMuted, 
+  setAudioMuted,
+  explainRegex
+} from './utils.js';
 import { renderPlayground } from './playground.js';
 import { renderCheatsheet } from './cheatsheet.js';
 
@@ -9,6 +18,7 @@ import { renderCheatsheet } from './cheatsheet.js';
 let currentLesson = 0;
 let currentView = 'lessons';
 let learningMode = localStorage.getItem('regex_mode') || 'standard'; // 'standard' | 'deepDive'
+let currentAccent = localStorage.getItem('regex_accent') || 'cyan';
 let completedLessons = new Set(JSON.parse(localStorage.getItem('regex_completed') || '[]'));
 let completedExercises = new Set(JSON.parse(localStorage.getItem('regex_completed_exercises') || '[]'));
 let collapsedGroups = new Set();
@@ -33,6 +43,42 @@ const CURRICULUM_GROUPS = [
     ids: [9, 11, 12, 13, 14] 
   },
 ];
+
+// ============================================================
+// NEON ACCENT PROFILES
+// ============================================================
+export function setNeonAccent(accent) {
+  currentAccent = accent;
+  localStorage.setItem('regex_accent', accent);
+  document.documentElement.dataset.accent = accent;
+
+  document.querySelectorAll('.palette-dot').forEach(dot => {
+    dot.classList.toggle('active', dot.classList.contains(`dot-${accent}`));
+  });
+}
+
+// ============================================================
+// AUDIO SFX TOGGLE
+// ============================================================
+export function toggleAudio() {
+  const muted = !isAudioMuted();
+  setAudioMuted(muted);
+  updateAudioIcon();
+  if (!muted) {
+    playSuccessChime();
+  }
+}
+
+function updateAudioIcon() {
+  const icon = document.getElementById('sound-icon');
+  const btn = document.getElementById('sound-toggle');
+  const muted = isAudioMuted();
+  if (btn) btn.classList.toggle('muted', muted);
+  if (icon) {
+    icon.setAttribute('data-lucide', muted ? 'volume-x' : 'volume-2');
+    lucide.createIcons();
+  }
+}
 
 // ============================================================
 // RENDER SIDEBAR
@@ -88,7 +134,7 @@ export function renderSidebar() {
   // Footer inside sidebar for resetting progress
   html += `
     <div style="padding: 16px; border-top: 1px solid var(--border); margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
-      <span style="font-size: 11px; color: var(--text3);">RegEx Lab v2.5</span>
+      <span style="font-size: 11px; color: var(--text3);">RegEx Lab v3.0 PWA</span>
       <button class="btn btn-ghost" onclick="resetAllProgress()" style="font-size: 11px; padding: 4px 8px; color: var(--red); display: flex; align-items: center; gap: 4px;" aria-label="Reset all progress">
         <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i> Reset Progress
       </button>
@@ -175,7 +221,7 @@ export function loadLesson(id) {
       <div class="test-display" id="example-${l.id}-${i}" style="font-size:13px;">${escapeHtml(ex.text)}</div>
     </div>`).join('');
 
-  // Base exercises list
+  // Active exercises
   const activeExercises = [...(l.exercises || [])];
   if (isDeepDive && l.extendedExercises) {
     l.extendedExercises.forEach(extEx => {
@@ -186,6 +232,7 @@ export function loadLesson(id) {
   let exercisesHtml = activeExercises.map((ex, idx) => {
     const isDone = completedExercises.has(`${id}-${idx}`);
     const isExtendedTask = ex.isExtended;
+    const hasTestSuite = !!ex.testSuite;
 
     return `
       <div class="exercise-box" style="margin-bottom:24px; ${isExtendedTask ? 'border-color: rgba(191,85,236,0.35); background: rgba(191,85,236,0.02);' : ''}">
@@ -196,6 +243,7 @@ export function loadLesson(id) {
               Task ${idx + 1}
             </span>
             ${isExtendedTask ? '<span class="extended-task-badge">DEEP DIVE BONUS</span>' : ''}
+            ${hasTestSuite ? '<span class="ects-badge" style="font-size:9px;">Unit Test Suite</span>' : ''}
           </div>
           <div id="ex-badge-${l.id}-${idx}" class="exercise-status-badge ${isDone ? 'completed' : ''}" style="font-size:11px; display:flex; align-items:center; gap:4px;">
             ${isDone ? '<i data-lucide="check-circle" style="width:12px;height:12px;color:var(--green);"></i> <span style="color:var(--green);font-weight:600;">Completed</span>' : '<span style="color:var(--text3);">In Progress</span>'}
@@ -222,9 +270,46 @@ export function loadLesson(id) {
                 <i data-lucide="lightbulb" style="width:14px;height:14px;color:var(--amber);"></i> Hint
               </button>
             </div>
+
+            <!-- REAL-TIME REGEX EXPLAINER STRIP -->
+            <div id="ex-explainer-${l.id}-${idx}" style="display:none;" class="regex-explainer-box"></div>
           </div>
           
-          <div id="ex-feedback-${l.id}-${idx}" style="min-height:36px; display:flex; align-items:center;"></div>
+          <!-- UNIT TEST SUITE PREVIEW (IF AVAILABLE) -->
+          ${hasTestSuite ? `
+          <div class="test-suite-box" id="test-suite-box-${l.id}-${idx}">
+            <div class="test-suite-title">
+              <span>Unit Validation Tests</span>
+              <span id="ts-badge-${l.id}-${idx}" style="color:var(--text3);">Pending verification</span>
+            </div>
+            <div class="test-cases-grid">
+              <div>
+                <div class="test-case-column-title" style="color:var(--green);"><i data-lucide="check" style="width:12px;height:12px;"></i> Should Match (Positive)</div>
+                <div id="ts-pos-${l.id}-${idx}">
+                  ${ex.testSuite.positive.map(item => `
+                    <div class="test-case-item" data-case="${escapeHtml(item)}">
+                      <span>${escapeHtml(item)}</span>
+                      <span class="case-status" style="color:var(--text3);">•</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+              <div>
+                <div class="test-case-column-title" style="color:var(--red);"><i data-lucide="x" style="width:12px;height:12px;"></i> Should Reject (Negative)</div>
+                <div id="ts-neg-${l.id}-${idx}">
+                  ${ex.testSuite.negative.map(item => `
+                    <div class="test-case-item" data-case="${escapeHtml(item)}">
+                      <span>${escapeHtml(item)}</span>
+                      <span class="case-status" style="color:var(--text3);">•</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          </div>
+          ` : ''}
+
+          <div id="ex-feedback-${l.id}-${idx}" style="min-height:36px; display:flex; align-items:center; margin-top:8px;"></div>
           
           <!-- HINT & REVEAL SOLUTION CONTAINER -->
           <div id="hint-box-${l.id}-${idx}" style="display:none;background:rgba(255,179,0,0.04);border:1px solid rgba(255,179,0,0.25);border-radius:8px;padding:14px 16px;margin-top:12px;animation:fadeIn 0.2s ease;">
@@ -427,13 +512,12 @@ export function resetExample(lessonId, exIdx) {
 }
 
 // ============================================================
-// EXERCISE CHECK
+// EXERCISE CHECK & TEST SUITE VERIFICATION
 // ============================================================
 export function checkExercise(lessonId, exerciseIdx) {
   const l = LESSONS[lessonId];
   if (!l) return;
 
-  // Find exercise: check regular exercises first, then extended
   let ex = l.exercises && l.exercises[exerciseIdx];
   if (!ex && l.extendedExercises) {
     const extIdx = exerciseIdx - (l.exercises ? l.exercises.length : 0);
@@ -446,11 +530,34 @@ export function checkExercise(lessonId, exerciseIdx) {
   const feedback = document.getElementById(`ex-feedback-${lessonId}-${exerciseIdx}`);
   const display = document.getElementById(`ex-display-${lessonId}-${exerciseIdx}`);
   const wrap = document.getElementById(`ex-pattern-wrap-${lessonId}-${exerciseIdx}`);
+  const explainerBox = document.getElementById(`ex-explainer-${lessonId}-${exerciseIdx}`);
 
   if (!patEl || !flagsEl || !feedback || !display || !wrap) return;
 
   const pattern = patEl.value;
   const flags = flagsEl.value;
+
+  // Real-time RegEx Explainer
+  if (explainerBox) {
+    if (pattern) {
+      const tokens = explainRegex(pattern);
+      explainerBox.style.display = 'flex';
+      explainerBox.innerHTML = `
+        <div class="explainer-title"><i data-lucide="terminal" style="width:11px;height:11px;"></i> Live Pattern Structure Analysis</div>
+        <div class="explainer-tokens-flow">
+          ${tokens.map(t => `
+            <div class="explainer-token-pill">
+              <span class="token-raw">${escapeHtml(t.raw)}</span>
+              <span class="token-desc">${escapeHtml(t.desc)}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      lucide.createIcons();
+    } else {
+      explainerBox.style.display = 'none';
+    }
+  }
 
   if (!pattern) {
     display.innerHTML = escapeHtml(ex.text);
@@ -492,16 +599,64 @@ export function checkExercise(lessonId, exerciseIdx) {
 
   const userMatchesSorted = [...allMatches].sort();
   const solutionMatchesSorted = [...solutionMatches].sort();
-  const isCorrect = JSON.stringify(userMatchesSorted) === JSON.stringify(solutionMatchesSorted) || altOk;
+  let isCorrect = (JSON.stringify(userMatchesSorted) === JSON.stringify(solutionMatchesSorted) && matchCount > 0) || altOk;
 
-  if (isCorrect && matchCount > 0) {
+  // Test Suite Evaluation (if present)
+  let testSuitePassed = true;
+  if (ex.testSuite) {
+    const posCont = document.getElementById(`ts-pos-${lessonId}-${exerciseIdx}`);
+    const negCont = document.getElementById(`ts-neg-${lessonId}-${exerciseIdx}`);
+    const tsBadge = document.getElementById(`ts-badge-${lessonId}-${exerciseIdx}`);
+
+    const testRe = new RegExp(re.source, re.flags);
+
+    // Verify positive cases
+    ex.testSuite.positive.forEach((item, pIdx) => {
+      const ok = testRe.test(item);
+      if (!ok) testSuitePassed = false;
+      if (posCont) {
+        const itemEl = posCont.children[pIdx];
+        if (itemEl) {
+          itemEl.className = `test-case-item ${ok ? 'pass' : 'fail'}`;
+          itemEl.querySelector('.case-status').innerHTML = ok ? '<i data-lucide="check" style="width:12px;height:12px;color:var(--green);"></i>' : '<i data-lucide="x" style="width:12px;height:12px;color:var(--red);"></i>';
+        }
+      }
+    });
+
+    // Verify negative cases (should NOT match)
+    ex.testSuite.negative.forEach((item, nIdx) => {
+      const ok = !testRe.test(item);
+      if (!ok) testSuitePassed = false;
+      if (negCont) {
+        const itemEl = negCont.children[nIdx];
+        if (itemEl) {
+          itemEl.className = `test-case-item ${ok ? 'pass' : 'fail'}`;
+          itemEl.querySelector('.case-status').innerHTML = ok ? '<i data-lucide="check" style="width:12px;height:12px;color:var(--green);"></i>' : '<i data-lucide="x" style="width:12px;height:12px;color:var(--red);"></i>';
+        }
+      }
+    });
+
+    if (tsBadge) {
+      tsBadge.innerHTML = testSuitePassed 
+        ? '<span style="color:var(--green);font-weight:700;">All Tests Passed ✓</span>' 
+        : '<span style="color:var(--amber);">Some Tests Failing</span>';
+    }
+    lucide.createIcons();
+
+    isCorrect = isCorrect && testSuitePassed;
+  }
+
+  if (isCorrect) {
     feedback.innerHTML = `<div class="match-badge" style="background:rgba(0,255,136,0.08);border-color:rgba(0,255,136,0.2);color:var(--green);">
-      <i data-lucide="check-circle" style="width:12px;height:12px;"></i> Correct! ${matchCount} match${matchCount === 1 ? '' : 'es'}
+      <i data-lucide="check-circle" style="width:12px;height:12px;"></i> Correct! ${matchCount} target${matchCount === 1 ? '' : 's'} matched & validated
     </div>`;
     wrap.style.borderColor = 'var(--green)';
 
     const exKey = `${lessonId}-${exerciseIdx}`;
     if (!completedExercises.has(exKey)) {
+      // Play cyberpunk neon success chime
+      playSuccessChime();
+
       completedExercises.add(exKey);
       localStorage.setItem('regex_completed_exercises', JSON.stringify([...completedExercises]));
 
@@ -538,11 +693,11 @@ export function checkExercise(lessonId, exerciseIdx) {
       setTimeout(() => wrap.classList.remove('correct-flash'), 600);
     }
   } else if (matchCount === 0) {
-    feedback.innerHTML = `<div class="match-badge no-match"><i data-lucide="x-circle" style="width:12px;height:12px;"></i> No matches</div>`;
+    feedback.innerHTML = `<div class="match-badge no-match"><i data-lucide="x-circle" style="width:12px;height:12px;"></i> No matches found</div>`;
     wrap.style.borderColor = '';
   } else {
     feedback.innerHTML = `<div class="match-badge" style="background:rgba(255,179,0,0.08);border-color:rgba(255,179,0,0.2);color:var(--amber);">
-      <i data-lucide="zap" style="width:12px;height:12px;"></i> ${matchCount} match${matchCount === 1 ? '' : 'es'} — refine pattern to match all expected targets
+      <i data-lucide="zap" style="width:12px;height:12px;"></i> ${matchCount} match${matchCount === 1 ? '' : 'es'} — check unit test criteria
     </div>`;
     wrap.style.borderColor = '';
   }
@@ -686,6 +841,8 @@ window.showHint = showHint;
 window.revealSolution = revealSolution;
 window.insertSolution = insertSolution;
 window.setLearningMode = setLearningMode;
+window.setNeonAccent = setNeonAccent;
+window.toggleAudio = toggleAudio;
 window.setView = setView;
 window.toggleSidebar = toggleSidebar;
 window.closeSidebar = closeSidebar;
@@ -697,6 +854,15 @@ window.resetAllProgress = resetAllProgress;
 // INIT
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
+  // Apply saved neon accent
+  setNeonAccent(currentAccent);
+  updateAudioIcon();
+
+  // PWA Service Worker Registration
+  if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+
   const topNav = document.getElementById('top-nav-container');
   if (topNav) {
     topNav.innerHTML = `

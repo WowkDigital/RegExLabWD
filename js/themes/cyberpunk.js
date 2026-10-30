@@ -46,7 +46,19 @@ export const cyberpunk = [
         "text": "Connecting to Node 1... Primary node is secure. NODE bypass successful.",
         "solution": "node",
         "flags": "gi",
-        "hint": "Type 'node' and select both the g and i flags on your deck."
+        "hint": "Type 'node' and select both the g and i flags on your deck.",
+        "testSuite": {
+          "positive": [
+            "regex",
+            "REGEX",
+            "Regex"
+          ],
+          "negative": [
+            "python",
+            "system",
+            "code"
+          ]
+        }
       },
       {
         "task": "Locate the word <code class=\"target-token\">grid</code> in the system telemetry (ignore case, find all).",
@@ -138,7 +150,22 @@ export const cyberpunk = [
           "\\d"
         ],
         "flags": "g",
-        "hint": "Use character class [0-9] or the digit shorthand \\d."
+        "hint": "Use character class [0-9] or the digit shorthand \\d.",
+        "testSuite": {
+          "positive": [
+            "4",
+            "8",
+            "1",
+            "9"
+          ],
+          "negative": [
+            "+",
+            " ",
+            "(",
+            ")",
+            "-"
+          ]
+        }
       },
       {
         "task": "Match only the letters <code class=\"target-token\">x, y, or z</code> (case-sensitive) in the decryption stream .",
@@ -242,7 +269,20 @@ export const cyberpunk = [
           "[0-9]{2}-[0-9]{3}"
         ],
         "flags": "g",
-        "hint": "Combine two digits, a hyphen, and three digits: \\d{2}-\\d{3}."
+        "hint": "Combine two digits, a hyphen, and three digits: \\d{2}-\\d{3}.",
+        "testSuite": {
+          "positive": [
+            " ",
+            "\t",
+            "\n"
+          ],
+          "negative": [
+            "a",
+            "0",
+            "_",
+            "-"
+          ]
+        }
       },
       {
         "task": "Find all <code class=\"target-token\">whitespace characters</code> (spaces, tabs, newlines) in the packet buffer .",
@@ -428,7 +468,16 @@ export const cyberpunk = [
         "text": "INFO: System OK\nERROR: Connection failed\nINFO: Retry 1\nERROR: Timeout occurred\nDEBUG: Port open",
         "solution": "^ERROR.*$",
         "flags": "gm",
-        "hint": "^ERROR matches the start of the line. .* matches the rest of the line, and $ asserts the end of line."
+        "hint": "^ERROR matches the start of the line. .* matches the rest of the line, and $ asserts the end of line.",
+        "testSuite": {
+          "positive": [
+            "root access"
+          ],
+          "negative": [
+            "proxy root",
+            "user"
+          ]
+        }
       },
       {
         "task": "Match words that <code class=\"target-token\">end in 'ly'</code>. Use the word boundary anchor \\b .",
@@ -1014,21 +1063,55 @@ export const cyberpunk = [
         "text": "#FFF\n#00e5ff\n#12345\n#ABCDEFG\n#FF00FF\ngreen",
         "solution": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
         "flags": "gm",
-        "hint": "Anchor the pattern with ^ and $, and use alternation for 3 or 6 hex characters."
+        "hint": "Anchor the pattern with ^ and $, and use alternation for 3 or 6 hex characters.",
+        "testSuite": {
+          "positive": [
+            "#FFF",
+            "#00e5ff",
+            "#FF00FF"
+          ],
+          "negative": [
+            "#12345",
+            "#ABCDEFG",
+            "green"
+          ]
+        }
       },
       {
         "task": "Design a password validation pattern: <code class=\"target-token\">minimum 8 characters</code>, at least one uppercase letter, one lowercase letter, and one digit .",
         "text": "Password123\nweakpass\n12345678\nUPPERCASE1\nValidPass9",
         "solution": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$",
         "flags": "gm",
-        "hint": "Use lookaheads (?=.*[a-z]), (?=.*[A-Z]), and (?=.*\\d), then assert length with .{8,}."
+        "hint": "Use lookaheads (?=.*[a-z]), (?=.*[A-Z]), and (?=.*\\d), then assert length with .{8,}.",
+        "testSuite": {
+          "positive": [
+            "Password123",
+            "ValidPass9"
+          ],
+          "negative": [
+            "weakpass",
+            "12345678",
+            "UPPERCASE1"
+          ]
+        }
       },
       {
         "task": "Write a validation pattern for IPv4 addresses (four octets 0-255 separated by dots).",
         "text": "192.168.1.1\n255.255.255.255\n256.0.0.1\n99.99.99.99",
         "solution": "^(?:(?:25[0-5]|2[0-4]\\d|[01]?\\d?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|[01]?\\d?\\d)$",
         "flags": "gm",
-        "hint": "Use explicit bounds for 0-255: 25[0-5]|2[0-4]\\d|[01]?\\d?\\d for each octet."
+        "hint": "Use explicit bounds for 0-255: 25[0-5]|2[0-4]\\d|[01]?\\d?\\d for each octet.",
+        "testSuite": {
+          "positive": [
+            "192.168.1.1",
+            "255.255.255.255"
+          ],
+          "negative": [
+            "256.0.0.1",
+            "99.99.99.999",
+            "invalid"
+          ]
+        }
       }
     ],
     "ects": 4,

@@ -1465,3 +1465,293 @@ body::before {
   border: 1px solid rgba(191, 85, 236, 0.4);
   letter-spacing: 0.8px;
 }
+
+
+/* ============================================================
+   NEON COLOR PROFILES
+   ============================================================ */
+:root[data-accent="green"] {
+  --accent: #00ff88;
+  --accent2: #00c96e;
+  --accent3: #009955;
+  --match-bg: rgba(0, 255, 136, 0.15);
+  --match-border: rgba(0, 255, 136, 0.6);
+}
+
+:root[data-accent="amber"] {
+  --accent: #ffb300;
+  --accent2: #ffa000;
+  --accent3: #ff8f00;
+  --match-bg: rgba(255, 179, 0, 0.15);
+  --match-border: rgba(255, 179, 0, 0.6);
+}
+
+:root[data-accent="magenta"] {
+  --accent: #ff2d7f;
+  --accent2: #e0266e;
+  --accent3: #b81b58;
+  --match-bg: rgba(255, 45, 127, 0.15);
+  --match-border: rgba(255, 45, 127, 0.6);
+}
+
+:root[data-accent="violet"] {
+  --accent: #bf55ec;
+  --accent2: #a43dd1;
+  --accent3: #8e2cb8;
+  --match-bg: rgba(191, 85, 236, 0.15);
+  --match-border: rgba(191, 85, 236, 0.6);
+}
+
+/* Palette Color Picker in Header */
+.accent-palette-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface2-solid);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 8px;
+}
+
+.palette-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.palette-dot:hover {
+  transform: scale(1.2);
+}
+
+.palette-dot.active {
+  border-color: #ffffff;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.dot-cyan { background: #00e5ff; color: #00e5ff; }
+.dot-green { background: #00ff88; color: #00ff88; }
+.dot-amber { background: #ffb300; color: #ffb300; }
+.dot-magenta { background: #ff2d7f; color: #ff2d7f; }
+.dot-violet { background: #bf55ec; color: #bf55ec; }
+
+/* Audio SFX Toggle Button */
+.btn-sound-toggle {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text3);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-sound-toggle:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.btn-sound-toggle.muted {
+  color: var(--text3);
+  opacity: 0.5;
+}
+
+/* ============================================================
+   REGEX REAL-TIME EXPLAINER
+   ============================================================ */
+.regex-explainer-box {
+  background: rgba(10, 21, 32, 0.6);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text2);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.explainer-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.explainer-tokens-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.explainer-token-pill {
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.explainer-token-pill .token-raw {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.explainer-token-pill .token-desc {
+  color: var(--text3);
+  font-size: 10px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* ============================================================
+   TEST SUITES (Positive & Negative Test Cases)
+   ============================================================ */
+.test-suite-box {
+  background: rgba(3, 7, 12, 0.4);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 12px;
+}
+
+.test-suite-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text3);
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.test-cases-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .test-cases-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.test-case-column-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.test-case-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface2-solid);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.test-case-item.pass {
+  border-color: rgba(0, 255, 136, 0.4);
+  background: rgba(0, 255, 136, 0.05);
+}
+
+.test-case-item.fail {
+  border-color: rgba(255, 77, 77, 0.4);
+  background: rgba(255, 77, 77, 0.05);
+}
+
+/* ============================================================
+   PLAYGROUND ENHANCEMENTS (Substitution & Code Export)
+   ============================================================ */
+.playground-tab-bar {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+}
+
+.pg-sub-tab {
+  background: transparent;
+  border: none;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.pg-sub-tab.active {
+  color: var(--accent);
+  background: rgba(0, 229, 255, 0.1);
+}
+
+.benchmark-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 229, 255, 0.08);
+  color: var(--accent);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.code-export-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 12, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.code-export-dialog {
+  background: var(--surface2-solid);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  max-width: 640px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+  padding: 24px;
+  animation: fadeIn 0.2s ease;
+}
