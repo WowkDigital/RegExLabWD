@@ -7,7 +7,8 @@ import {
   playSuccessChime, 
   isAudioMuted, 
   setAudioMuted,
-  explainRegex
+  explainRegex,
+  renderFlagButtonsHtml
 } from './utils.js';
 import { renderPlayground } from './playground.js';
 import { renderCheatsheet } from './cheatsheet.js';
@@ -18,6 +19,7 @@ import { renderCheatsheet } from './cheatsheet.js';
 let currentLesson = 0;
 let currentView = 'lessons';
 let learningMode = localStorage.getItem('regex_mode') || 'standard'; // 'standard' | 'deepDive'
+let simplifiedMode = localStorage.getItem('regex_simplified') !== 'false'; // DEFAULT: TRUE
 let currentAccent = localStorage.getItem('regex_accent') || 'cyan';
 let completedLessons = new Set(JSON.parse(localStorage.getItem('regex_completed') || '[]'));
 let completedExercises = new Set(JSON.parse(localStorage.getItem('regex_completed_exercises') || '[]'));
@@ -43,6 +45,28 @@ const CURRICULUM_GROUPS = [
     ids: [9, 11, 12, 13, 14] 
   },
 ];
+
+// ============================================================
+// SIMPLIFIED GUIDANCE MODE TOGGLE
+// ============================================================
+export function toggleSimplifiedMode() {
+  simplifiedMode = !simplifiedMode;
+  localStorage.setItem('regex_simplified', simplifiedMode ? 'true' : 'false');
+  updateSimplifiedButton();
+  if (currentView === 'lessons') {
+    loadLesson(currentLesson);
+  } else if (currentView === 'playground') {
+    renderPlayground();
+  }
+}
+
+function updateSimplifiedButton() {
+  const btn = document.getElementById('simplified-toggle');
+  if (btn) {
+    btn.classList.toggle('active', simplifiedMode);
+    btn.setAttribute('aria-pressed', simplifiedMode);
+  }
+}
 
 // ============================================================
 // NEON ACCENT PROFILES
@@ -131,7 +155,6 @@ export function renderSidebar() {
     html += `</div>`;
   });
 
-  // Footer inside sidebar for resetting progress
   html += `
     <div style="padding: 16px; border-top: 1px solid var(--border); margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
       <span style="font-size: 11px; color: var(--text3);">RegEx Lab v3.0 PWA</span>
@@ -177,6 +200,86 @@ export function setLearningMode(mode) {
 }
 
 // ============================================================
+// INTERACTIVE FLAG BUTTON TOGGLES [[Icon] [Flag]]
+// ============================================================
+export function toggleExerciseFlag(scope, flag) {
+  const hiddenInput = document.getElementById(`ex-flags-${scope}`);
+  if (!hiddenInput) return;
+
+  let current = hiddenInput.value || '';
+  if (current.includes(flag)) {
+    current = current.replace(new RegExp(flag, 'g'), '');
+  } else {
+    current += flag;
+  }
+  hiddenInput.value = current;
+
+  const btn = document.getElementById(`flag-btn-${scope}-${flag}`);
+  if (btn) {
+    const isActive = current.includes(flag);
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-pressed', isActive);
+  }
+
+  const parts = scope.split('-');
+  if (parts.length >= 2) {
+    checkExercise(parseInt(parts[0], 10), parseInt(parts[1], 10));
+  }
+}
+
+export function toggleExampleFlag(scope, flag) {
+  const hiddenInput = document.getElementById(`example-flags-${scope}`);
+  if (!hiddenInput) return;
+
+  let current = hiddenInput.value || '';
+  if (current.includes(flag)) {
+    current = current.replace(new RegExp(flag, 'g'), '');
+  } else {
+    current += flag;
+  }
+  hiddenInput.value = current;
+
+  const btn = document.getElementById(`flag-btn-${scope}-${flag}`);
+  if (btn) {
+    const isActive = current.includes(flag);
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-pressed', isActive);
+  }
+
+  const parts = scope.split('-');
+  if (parts.length >= 2) {
+    runExample(parseInt(parts[0], 10), parseInt(parts[1], 10));
+  }
+}
+
+// ============================================================
+// TOKEN HOVER LINKING INTERACTION
+// ============================================================
+export function highlightLinkedToken(scope, tokenIdx) {
+  const mirror = document.getElementById(`ex-syntax-mirror-${scope}`);
+  const explainer = document.getElementById(`ex-explainer-${scope}`);
+  if (mirror) {
+    const el = mirror.querySelector(`[data-tok-idx="${tokenIdx}"]`);
+    if (el) el.classList.add('linked-active');
+  }
+  if (explainer) {
+    const el = explainer.querySelector(`[data-tok-idx="${tokenIdx}"]`);
+    if (el) el.classList.add('linked-active');
+  }
+}
+
+export function unhighlightLinkedToken(scope) {
+  const mirror = document.getElementById(`ex-syntax-mirror-${scope}`);
+  const explainer = document.getElementById(`ex-explainer-${scope}`);
+  if (mirror) {
+    mirror.querySelectorAll('.linked-active').forEach(el => el.classList.remove('linked-active'));
+  }
+  if (explainer) {
+    explainer.querySelectorAll('.linked-active').forEach(el => el.classList.remove('linked-active'));
+  }
+}
+
+// ============================================================
 // RENDER LESSON
 // ============================================================
 export function loadLesson(id) {
@@ -204,22 +307,32 @@ export function loadLesson(id) {
     </div>`).join('');
 
   // Examples cards
-  let examplesHtml = (l.examples || []).map((ex, i) => `
+  let examplesHtml = (l.examples || []).map((ex, i) => {
+    const scope = `${l.id}-${i}`;
+    return `
     <div class="glass-card" style="margin-bottom:20px;padding:20px;">
       <div style="font-size:12px;color:var(--text3);margin-bottom:12px;display:flex;align-items:center;gap:8px;font-weight:600;">
         <i data-lucide="test-tube" style="width:14px;height:14px;color:var(--accent);"></i> Example ${i + 1}: ${escapeHtml(ex.desc)}
       </div>
-      <div class="pattern-wrapper" id="example-wrapper-${l.id}-${i}" style="margin-bottom:12px;">
+      <div class="pattern-wrapper" id="example-wrapper-${l.id}-${i}" style="margin-bottom:8px;">
         <span class="slash">/</span>
         <input type="text" id="example-input-${l.id}-${i}" class="pattern-input" value="${escapeHtml(ex.pattern)}" aria-label="Example pattern input" oninput="debouncedRunExample(${l.id}, ${i})" style="flex:1;padding:10px 4px;font-size:14px;color:var(--accent);font-family:'JetBrains Mono',monospace;background:transparent;border:none;outline:none;">
         <span class="slash">/</span>
-        <input type="text" id="example-flags-${l.id}-${i}" class="flags" value="${escapeHtml(ex.flags)}" aria-label="Example flags input" oninput="debouncedRunExample(${l.id}, ${i})" style="width:50px;background:transparent;border:none;outline:none;font-family:inherit;">
+        <input type="hidden" id="example-flags-${l.id}-${i}" value="${escapeHtml(ex.flags)}">
         <button class="btn btn-ghost" style="padding:6px 14px;font-size:11px;border-radius:0;border-left:1px solid var(--border);border-top:none;border-bottom:none;border-right:none;" onclick="resetExample(${l.id}, ${i})" aria-label="Reset example">
           <i data-lucide="rotate-ccw" style="width:12px;height:12px;color:var(--amber);"></i> Reset
         </button>
       </div>
+
+      <!-- INTERACTIVE FLAG BUTTONS FOR EXAMPLE -->
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+        <span style="font-size:11px;color:var(--text3);font-family:'Orbitron',sans-serif;font-weight:700;">Flags:</span>
+        ${renderFlagButtonsHtml(ex.flags, scope, 'toggleExampleFlag', ['g', 'i', 'm', 's', 'u'], simplifiedMode)}
+      </div>
+
       <div class="test-display" id="example-${l.id}-${i}" style="font-size:13px;">${escapeHtml(ex.text)}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   // Active exercises
   const activeExercises = [...(l.exercises || [])];
@@ -233,6 +346,7 @@ export function loadLesson(id) {
     const isDone = completedExercises.has(`${id}-${idx}`);
     const isExtendedTask = ex.isExtended;
     const hasTestSuite = !!ex.testSuite;
+    const scope = `${l.id}-${idx}`;
 
     return `
       <div class="exercise-box" style="margin-bottom:24px; ${isExtendedTask ? 'border-color: rgba(191,85,236,0.35); background: rgba(191,85,236,0.02);' : ''}">
@@ -258,21 +372,41 @@ export function loadLesson(id) {
           </div>
           
           <div style="margin-bottom:16px;">
-            <div class="exercise-label" style="font-size:11px; text-transform:uppercase; color:var(--text3); font-family:'Orbitron',sans-serif; margin-bottom:6px;">Your RegEx Pattern</div>
-            <div style="display:flex;gap:12px;align-items:center;">
+            <div class="exercise-label" style="font-size:11px; text-transform:uppercase; color:var(--text3); font-family:'Orbitron',sans-serif; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+              <span>Your RegEx Pattern</span>
+              <span style="font-size:10px; color:var(--text3); text-transform:none;">Hover tokens to inspect relationship</span>
+            </div>
+            
+            <div style="display:flex;gap:12px;align-items:center;margin-bottom:6px;">
               <div class="pattern-wrapper" id="ex-pattern-wrap-${l.id}-${idx}" style="flex:1;">
                 <span class="slash">/</span>
                 <input type="text" id="ex-pattern-${l.id}-${idx}" class="pattern-input" placeholder="enter pattern..." aria-label="Pattern for task ${idx + 1}" oninput="debouncedCheckExercise(${l.id}, ${idx})">
                 <span class="slash">/</span>
-                <input type="text" id="ex-flags-${l.id}-${idx}" class="flags" value="${escapeHtml(ex.flags)}" aria-label="Flags for task ${idx + 1}" oninput="debouncedCheckExercise(${l.id}, ${idx})" style="width:50px;background:transparent;border:none;outline:none;font-family:inherit;">
+                <input type="hidden" id="ex-flags-${l.id}-${idx}" value="${escapeHtml(ex.flags)}">
               </div>
               <button class="btn btn-ghost" onclick="showHint(${l.id}, ${idx})" aria-label="Show hint for task ${idx + 1}" style="display:flex; align-items:center; gap:6px;">
                 <i data-lucide="lightbulb" style="width:14px;height:14px;color:var(--amber);"></i> Hint
               </button>
             </div>
 
-            <!-- REAL-TIME REGEX EXPLAINER STRIP -->
-            <div id="ex-explainer-${l.id}-${idx}" style="display:none;" class="regex-explainer-box"></div>
+            <!-- SYNTAX TOKEN MIRROR RIBBON -->
+            <div id="ex-syntax-mirror-${scope}" class="pattern-syntax-mirror" style="display:none;"></div>
+
+            <!-- INTERACTIVE FLAG BUTTONS FOR EXERCISE [[Icon] [Flag]] -->
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;margin-bottom:8px;">
+              <span style="font-size:11px;color:var(--text3);font-family:'Orbitron',sans-serif;font-weight:700;">Flags:</span>
+              ${renderFlagButtonsHtml(ex.flags, scope, 'toggleExerciseFlag', ['g', 'i', 'm', 's', 'u'], simplifiedMode)}
+            </div>
+
+            <!-- SIMPLIFIED MODE HELPER TIP -->
+            ${simplifiedMode && ex.flags ? `
+            <div class="simplified-helper-tip">
+              <i data-lucide="sparkles" style="width:12px;height:12px;color:var(--green);"></i>
+              <span><strong>Simplified Guidance:</strong> This challenge requires flag(s): <code style="color:var(--accent);">${escapeHtml(ex.flags)}</code>. Click the buttons above to enable or disable them without typing!</span>
+            </div>` : ''}
+
+            <!-- REAL-TIME REGEX EXPLAINER STRIP WITH HOVER LINKING -->
+            <div id="ex-explainer-${scope}" style="display:none;" class="regex-explainer-box"></div>
           </div>
           
           <!-- UNIT TEST SUITE PREVIEW (IF AVAILABLE) -->
@@ -280,7 +414,9 @@ export function loadLesson(id) {
           <div class="test-suite-box" id="test-suite-box-${l.id}-${idx}">
             <div class="test-suite-title">
               <span>Unit Validation Tests</span>
-              <span id="ts-badge-${l.id}-${idx}" style="color:var(--text3);">Pending verification</span>
+              <span id="ts-badge-${l.id}-${idx}" style="color:var(--text3);display:flex;align-items:center;gap:4px;">
+                <i data-lucide="clock" style="width:11px;height:11px;"></i> Pending verification
+              </span>
             </div>
             <div class="test-cases-grid">
               <div>
@@ -289,7 +425,7 @@ export function loadLesson(id) {
                   ${ex.testSuite.positive.map(item => `
                     <div class="test-case-item" data-case="${escapeHtml(item)}">
                       <span>${escapeHtml(item)}</span>
-                      <span class="case-status" style="color:var(--text3);">•</span>
+                      <span class="case-status" style="display:flex;align-items:center;"><i data-lucide="circle-dashed" style="width:11px;height:11px;color:var(--text3);"></i></span>
                     </div>
                   `).join('')}
                 </div>
@@ -300,7 +436,7 @@ export function loadLesson(id) {
                   ${ex.testSuite.negative.map(item => `
                     <div class="test-case-item" data-case="${escapeHtml(item)}">
                       <span>${escapeHtml(item)}</span>
-                      <span class="case-status" style="color:var(--text3);">•</span>
+                      <span class="case-status" style="display:flex;align-items:center;"><i data-lucide="circle-dashed" style="width:11px;height:11px;color:var(--text3);"></i></span>
                     </div>
                   `).join('')}
                 </div>
@@ -458,7 +594,6 @@ export function loadLesson(id) {
 
   lucide.createIcons();
 
-  // Run examples
   (l.examples || []).forEach((ex, i) => {
     applyRegex(ex.pattern, ex.flags, ex.text, `example-${l.id}-${i}`);
   });
@@ -505,14 +640,22 @@ export function resetExample(lessonId, exIdx) {
   const wrapperEl = document.getElementById(`example-wrapper-${lessonId}-${exIdx}`);
 
   if (inputEl) inputEl.value = ex.pattern;
-  if (flagsEl) flagsEl.value = ex.flags;
+  if (flagsEl) {
+    flagsEl.value = ex.flags;
+    ['g', 'i', 'm', 's', 'u'].forEach(f => {
+      const btn = document.getElementById(`flag-btn-${lessonId}-${exIdx}-${f}`);
+      if (btn) {
+        btn.classList.toggle('active', ex.flags.includes(f));
+      }
+    });
+  }
   if (wrapperEl) wrapperEl.classList.remove('error');
 
   applyRegex(ex.pattern, ex.flags, ex.text, `example-${lessonId}-${exIdx}`);
 }
 
 // ============================================================
-// EXERCISE CHECK & TEST SUITE VERIFICATION
+// EXERCISE CHECK, SYNTAX MIRROR & TEST SUITE VERIFICATION
 // ============================================================
 export function checkExercise(lessonId, exerciseIdx) {
   const l = LESSONS[lessonId];
@@ -525,28 +668,52 @@ export function checkExercise(lessonId, exerciseIdx) {
   }
   if (!ex) return;
 
-  const patEl = document.getElementById(`ex-pattern-${lessonId}-${exerciseIdx}`);
-  const flagsEl = document.getElementById(`ex-flags-${lessonId}-${exerciseIdx}`);
-  const feedback = document.getElementById(`ex-feedback-${lessonId}-${exerciseIdx}`);
-  const display = document.getElementById(`ex-display-${lessonId}-${exerciseIdx}`);
-  const wrap = document.getElementById(`ex-pattern-wrap-${lessonId}-${exerciseIdx}`);
-  const explainerBox = document.getElementById(`ex-explainer-${lessonId}-${exerciseIdx}`);
+  const scope = `${lessonId}-${exerciseIdx}`;
+  const patEl = document.getElementById(`ex-pattern-${scope}`);
+  const flagsEl = document.getElementById(`ex-flags-${scope}`);
+  const feedback = document.getElementById(`ex-feedback-${scope}`);
+  const display = document.getElementById(`ex-display-${scope}`);
+  const wrap = document.getElementById(`ex-pattern-wrap-${scope}`);
+  const explainerBox = document.getElementById(`ex-explainer-${scope}`);
+  const mirrorBox = document.getElementById(`ex-syntax-mirror-${scope}`);
 
   if (!patEl || !flagsEl || !feedback || !display || !wrap) return;
 
   const pattern = patEl.value;
   const flags = flagsEl.value;
 
-  // Real-time RegEx Explainer
-  if (explainerBox) {
-    if (pattern) {
-      const tokens = explainRegex(pattern);
+  // Real-time RegEx Explainer & Syntax Token Mirror
+  if (pattern) {
+    const tokens = explainRegex(pattern);
+
+    // 1. Render Syntax Mirror directly under pattern
+    if (mirrorBox) {
+      mirrorBox.style.display = 'flex';
+      mirrorBox.innerHTML = tokens.map((t, tIdx) => `
+        <span class="mirror-token tok-${t.type}" 
+          data-tok-idx="${tIdx}" 
+          onmouseenter="highlightLinkedToken('${scope}', ${tIdx})" 
+          onmouseleave="unhighlightLinkedToken('${scope}')"
+          title="${t.typeLabel}: ${escapeHtml(t.desc)}">
+          ${escapeHtml(t.raw)}
+        </span>
+      `).join('');
+    }
+
+    // 2. Render Live Explainer Cards
+    if (explainerBox) {
       explainerBox.style.display = 'flex';
       explainerBox.innerHTML = `
-        <div class="explainer-title"><i data-lucide="terminal" style="width:11px;height:11px;"></i> Live Pattern Structure Analysis</div>
+        <div class="explainer-title">
+          <i data-lucide="terminal" style="width:11px;height:11px;"></i> Live Pattern Structure Analysis
+        </div>
         <div class="explainer-tokens-flow">
-          ${tokens.map(t => `
-            <div class="explainer-token-pill">
+          ${tokens.map((t, tIdx) => `
+            <div class="explainer-token-pill tok-${t.type}" 
+              data-tok-idx="${tIdx}"
+              onmouseenter="highlightLinkedToken('${scope}', ${tIdx})" 
+              onmouseleave="unhighlightLinkedToken('${scope}')">
+              <span class="token-type-tag">${t.typeLabel}</span>
               <span class="token-raw">${escapeHtml(t.raw)}</span>
               <span class="token-desc">${escapeHtml(t.desc)}</span>
             </div>
@@ -554,9 +721,10 @@ export function checkExercise(lessonId, exerciseIdx) {
         </div>
       `;
       lucide.createIcons();
-    } else {
-      explainerBox.style.display = 'none';
     }
+  } else {
+    if (mirrorBox) mirrorBox.style.display = 'none';
+    if (explainerBox) explainerBox.style.display = 'none';
   }
 
   if (!pattern) {
@@ -601,16 +769,16 @@ export function checkExercise(lessonId, exerciseIdx) {
   const solutionMatchesSorted = [...solutionMatches].sort();
   let isCorrect = (JSON.stringify(userMatchesSorted) === JSON.stringify(solutionMatchesSorted) && matchCount > 0) || altOk;
 
-  // Test Suite Evaluation (if present)
+  // Test Suite Evaluation
   let testSuitePassed = true;
   if (ex.testSuite) {
-    const posCont = document.getElementById(`ts-pos-${lessonId}-${exerciseIdx}`);
-    const negCont = document.getElementById(`ts-neg-${lessonId}-${exerciseIdx}`);
-    const tsBadge = document.getElementById(`ts-badge-${lessonId}-${exerciseIdx}`);
+    const posCont = document.getElementById(`ts-pos-${scope}`);
+    const negCont = document.getElementById(`ts-neg-${scope}`);
+    const tsBadge = document.getElementById(`ts-badge-${scope}`);
 
     const testRe = new RegExp(re.source, re.flags);
 
-    // Verify positive cases
+    // Positive cases
     ex.testSuite.positive.forEach((item, pIdx) => {
       const ok = testRe.test(item);
       if (!ok) testSuitePassed = false;
@@ -623,7 +791,7 @@ export function checkExercise(lessonId, exerciseIdx) {
       }
     });
 
-    // Verify negative cases (should NOT match)
+    // Negative cases
     ex.testSuite.negative.forEach((item, nIdx) => {
       const ok = !testRe.test(item);
       if (!ok) testSuitePassed = false;
@@ -638,8 +806,8 @@ export function checkExercise(lessonId, exerciseIdx) {
 
     if (tsBadge) {
       tsBadge.innerHTML = testSuitePassed 
-        ? '<span style="color:var(--green);font-weight:700;">All Tests Passed ✓</span>' 
-        : '<span style="color:var(--amber);">Some Tests Failing</span>';
+        ? '<span style="color:var(--green);font-weight:700;display:flex;align-items:center;gap:4px;"><i data-lucide="check-circle" style="width:11px;height:11px;"></i> All Tests Passed</span>' 
+        : '<span style="color:var(--amber);display:flex;align-items:center;gap:4px;"><i data-lucide="alert-circle" style="width:11px;height:11px;"></i> Criteria Not Met</span>';
     }
     lucide.createIcons();
 
@@ -654,7 +822,6 @@ export function checkExercise(lessonId, exerciseIdx) {
 
     const exKey = `${lessonId}-${exerciseIdx}`;
     if (!completedExercises.has(exKey)) {
-      // Play cyberpunk neon success chime
       playSuccessChime();
 
       completedExercises.add(exKey);
@@ -673,7 +840,7 @@ export function checkExercise(lessonId, exerciseIdx) {
 
       renderSidebar();
 
-      const badgeEl = document.getElementById(`ex-badge-${lessonId}-${exerciseIdx}`);
+      const badgeEl = document.getElementById(`ex-badge-${scope}`);
       if (badgeEl) {
         badgeEl.className = 'exercise-status-badge completed';
         badgeEl.innerHTML = '<i data-lucide="check-circle" style="width:12px;height:12px;color:var(--green);"></i> <span style="color:var(--green);font-weight:600;">Completed</span>';
@@ -738,12 +905,21 @@ export function insertSolution(lessonId, exerciseIdx) {
   }
   if (!ex) return;
 
-  const patEl = document.getElementById(`ex-pattern-${lessonId}-${exerciseIdx}`);
-  const flagsEl = document.getElementById(`ex-flags-${lessonId}-${exerciseIdx}`);
+  const scope = `${lessonId}-${exerciseIdx}`;
+  const patEl = document.getElementById(`ex-pattern-${scope}`);
+  const flagsEl = document.getElementById(`ex-flags-${scope}`);
 
   if (patEl && flagsEl) {
     patEl.value = ex.solution;
     flagsEl.value = ex.flags;
+
+    ['g', 'i', 'm', 's', 'u'].forEach(f => {
+      const btn = document.getElementById(`flag-btn-${scope}-${f}`);
+      if (btn) {
+        btn.classList.toggle('active', ex.flags.includes(f));
+      }
+    });
+
     checkExercise(lessonId, exerciseIdx);
   }
 }
@@ -841,8 +1017,13 @@ window.showHint = showHint;
 window.revealSolution = revealSolution;
 window.insertSolution = insertSolution;
 window.setLearningMode = setLearningMode;
+window.toggleSimplifiedMode = toggleSimplifiedMode;
 window.setNeonAccent = setNeonAccent;
 window.toggleAudio = toggleAudio;
+window.toggleExerciseFlag = toggleExerciseFlag;
+window.toggleExampleFlag = toggleExampleFlag;
+window.highlightLinkedToken = highlightLinkedToken;
+window.unhighlightLinkedToken = unhighlightLinkedToken;
 window.setView = setView;
 window.toggleSidebar = toggleSidebar;
 window.closeSidebar = closeSidebar;
@@ -854,9 +1035,9 @@ window.resetAllProgress = resetAllProgress;
 // INIT
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-  // Apply saved neon accent
   setNeonAccent(currentAccent);
   updateAudioIcon();
+  updateSimplifiedButton();
 
   // PWA Service Worker Registration
   if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
@@ -881,7 +1062,7 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
   }
 
-  // Inject Theme Selector
+  // Theme selector
   const headerLeft = document.querySelector('.header-left');
   if (headerLeft) {
     const selectorContainer = document.createElement('div');

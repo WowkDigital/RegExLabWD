@@ -102,6 +102,43 @@ export function applyRegex(pattern, flags, text, targetId) {
 }
 
 // ============================================================
+// FLAG DEFINITIONS & UI GENERATOR [[Icon] [Flag]]
+// ============================================================
+export const AVAILABLE_FLAGS = [
+  { flag: 'g', icon: 'globe', name: 'Global', desc: 'Match all occurrences across text' },
+  { flag: 'i', icon: 'type', name: 'Case-Insensitive', desc: 'Ignore uppercase vs lowercase' },
+  { flag: 'm', icon: 'align-left', name: 'Multiline', desc: '^ and $ match line boundaries' },
+  { flag: 's', icon: 'sparkles', name: 'DotAll', desc: 'Dot (.) matches newlines too' },
+  { flag: 'u', icon: 'languages', name: 'Unicode', desc: 'Enable full Unicode handling' },
+  { flag: 'y', icon: 'pin', name: 'Sticky', desc: 'Match strictly at current lastIndex' },
+  { flag: 'd', icon: 'hash', name: 'Indices', desc: 'Expose start/end match slice indices' }
+];
+
+export function renderFlagButtonsHtml(activeFlags = '', scope = '', onToggleFnName = 'toggleFlag', allowedFlags = ['g', 'i', 'm', 's', 'u'], showLabels = true) {
+  const filtered = AVAILABLE_FLAGS.filter(f => allowedFlags.includes(f.flag));
+  
+  let html = `<div class="flags-button-group" id="flags-group-${scope}">`;
+  filtered.forEach(f => {
+    const isActive = activeFlags.includes(f.flag);
+    html += `
+      <button type="button" 
+        class="flag-btn ${isActive ? 'active' : ''}" 
+        id="flag-btn-${scope}-${f.flag}"
+        onclick="${onToggleFnName}('${scope}', '${f.flag}')" 
+        title="${f.name} (${f.flag}): ${f.desc}"
+        aria-pressed="${isActive}"
+        aria-label="Flag ${f.flag}: ${f.name}">
+        <i data-lucide="${f.icon}"></i>
+        <span class="flag-char">${f.flag}</span>
+        ${showLabels ? `<span class="flag-label">${f.name}</span>` : ''}
+      </button>
+    `;
+  });
+  html += `</div>`;
+  return html;
+}
+
+// ============================================================
 // AUDIO SFX ENGINE (Web Audio API Synthesizer)
 // ============================================================
 let audioCtx = null;
@@ -124,9 +161,6 @@ export function setAudioMuted(muted) {
   localStorage.setItem('regex_muted', muted ? 'true' : 'false');
 }
 
-/**
- * Synthesizes a futuristic cyberpunk neon success chime (two-tone rising synth).
- */
 export function playSuccessChime() {
   if (isAudioMuted()) return;
   try {
@@ -140,7 +174,7 @@ export function playSuccessChime() {
     const gain1 = ctx.createGain();
     osc1.type = 'sine';
     osc1.frequency.setValueAtTime(587.33, now);
-    osc1.frequency.exponentialRampToValueAtTime(880, now + 0.15); // Glides to A5
+    osc1.frequency.exponentialRampToValueAtTime(880, now + 0.15);
     
     gain1.gain.setValueAtTime(0, now);
     gain1.gain.linearRampToValueAtTime(0.18, now + 0.02);
@@ -174,12 +208,12 @@ export function playSuccessChime() {
 }
 
 // ============================================================
-// REAL-TIME REGEX EXPLAINER / PARSER
+// REAL-TIME REGEX EXPLAINER / PARSER WITH SEMANTIC TYPES
 // ============================================================
 /**
- * Analyzes regex tokens and returns human-readable breakdowns.
+ * Analyzes regex tokens and returns human-readable breakdowns with semantic color types.
  * @param {string} pattern 
- * @returns {Array<{raw: string, desc: string}>}
+ * @returns {Array<{raw: string, desc: string, type: string, typeLabel: string}>}
  */
 export function explainRegex(pattern) {
   if (!pattern) return [];
@@ -187,41 +221,42 @@ export function explainRegex(pattern) {
   let i = 0;
   const len = pattern.length;
 
-  while (i < len && tokens.length < 15) {
+  while (i < len && tokens.length < 20) {
     const ch = pattern[i];
 
     if (ch === '^') {
-      tokens.push({ raw: '^', desc: 'Line / string start anchor' });
+      tokens.push({ raw: '^', desc: 'Line / string start anchor', type: 'anchor', typeLabel: 'Anchor' });
       i++;
     } else if (ch === '$') {
-      tokens.push({ raw: '$', desc: 'Line / string end anchor' });
+      tokens.push({ raw: '$', desc: 'Line / string end anchor', type: 'anchor', typeLabel: 'Anchor' });
       i++;
     } else if (ch === '.') {
-      tokens.push({ raw: '.', desc: 'Any character wildcard' });
+      tokens.push({ raw: '.', desc: 'Any character wildcard (except newline)', type: 'class', typeLabel: 'Wildcard' });
       i++;
     } else if (ch === '\\') {
       const next = pattern[i + 1] || '';
       const pair = '\\' + next;
       const shorthands = {
-        '\\d': 'Any digit [0-9]',
-        '\\D': 'Any non-digit',
-        '\\w': 'Word char [a-zA-Z0-9_]',
-        '\\W': 'Non-word char',
-        '\\s': 'Whitespace (space, tab, nl)',
-        '\\S': 'Non-whitespace',
-        '\\b': 'Word boundary position',
-        '\\B': 'Non-word boundary',
-        '\\n': 'Newline character',
-        '\\t': 'Tab character'
+        '\\d': { desc: 'Digit [0-9]', type: 'class', label: 'Digit' },
+        '\\D': { desc: 'Non-digit [^0-9]', type: 'class', label: 'Non-Digit' },
+        '\\w': { desc: 'Word character [a-zA-Z0-9_]', type: 'class', label: 'Word' },
+        '\\W': { desc: 'Non-word character', type: 'class', label: 'Non-Word' },
+        '\\s': { desc: 'Whitespace (space, tab, nl)', type: 'class', label: 'Whitespace' },
+        '\\S': { desc: 'Non-whitespace character', type: 'class', label: 'Non-Space' },
+        '\\b': { desc: 'Word boundary transition', type: 'anchor', label: 'Boundary' },
+        '\\B': { desc: 'Non-word boundary transition', type: 'anchor', label: 'Non-Bound' },
+        '\\n': { desc: 'Newline character', type: 'class', label: 'Newline' },
+        '\\t': { desc: 'Tab character', type: 'class', label: 'Tab' }
       };
+
       if (shorthands[pair]) {
-        tokens.push({ raw: pair, desc: shorthands[pair] });
+        tokens.push({ raw: pair, desc: shorthands[pair].desc, type: shorthands[pair].type, typeLabel: shorthands[pair].label });
         i += 2;
       } else if (/[1-9]/.test(next)) {
-        tokens.push({ raw: pair, desc: `Backreference to group #${next}` });
+        tokens.push({ raw: pair, desc: `Backreference to group #${next}`, type: 'group', typeLabel: 'Backref' });
         i += 2;
       } else {
-        tokens.push({ raw: pair, desc: `Escaped literal "${next}"` });
+        tokens.push({ raw: pair, desc: `Escaped literal character "${next}"`, type: 'literal', typeLabel: 'Escape' });
         i += 2;
       }
     } else if (ch === '[') {
@@ -231,65 +266,67 @@ export function explainRegex(pattern) {
       const isNeg = classBody.startsWith('[^');
       tokens.push({
         raw: classBody,
-        desc: isNeg ? 'Negated character set' : 'Character set / range'
+        desc: isNeg ? 'Negated character set (match any NOT listed)' : 'Character set / range (match one of set)',
+        type: 'class',
+        typeLabel: isNeg ? 'Neg Set' : 'Char Set'
       });
       i = closeIdx + 1;
     } else if (ch === '(') {
       if (pattern.startsWith('(?:', i)) {
-        tokens.push({ raw: '(?:...)', desc: 'Non-capturing group' });
+        tokens.push({ raw: '(?:', desc: 'Start non-capturing group', type: 'group', typeLabel: 'Non-Capture' });
         i += 3;
       } else if (pattern.startsWith('(?=', i)) {
-        tokens.push({ raw: '(?=...)', desc: 'Positive lookahead' });
+        tokens.push({ raw: '(?=', desc: 'Start positive lookahead', type: 'lookaround', typeLabel: 'Lookahead +' });
         i += 3;
       } else if (pattern.startsWith('(?!', i)) {
-        tokens.push({ raw: '(?!...)', desc: 'Negative lookahead' });
+        tokens.push({ raw: '(?!', desc: 'Start negative lookahead', type: 'lookaround', typeLabel: 'Lookahead -' });
         i += 3;
       } else if (pattern.startsWith('(?<=', i)) {
-        tokens.push({ raw: '(?<=...)', desc: 'Positive lookbehind' });
+        tokens.push({ raw: '(?<=', desc: 'Start positive lookbehind', type: 'lookaround', typeLabel: 'Lookbehind +' });
         i += 4;
       } else if (pattern.startsWith('(?<!', i)) {
-        tokens.push({ raw: '(?<!...)', desc: 'Negative lookbehind' });
+        tokens.push({ raw: '(?<!', desc: 'Start negative lookbehind', type: 'lookaround', typeLabel: 'Lookbehind -' });
         i += 4;
       } else if (pattern.startsWith('(?<', i)) {
-        tokens.push({ raw: '(?<name>...)', desc: 'Named capturing group' });
+        tokens.push({ raw: '(?<name>', desc: 'Start named capturing group', type: 'group', typeLabel: 'Named Group' });
         i += 3;
       } else {
-        tokens.push({ raw: '(...)', desc: 'Capturing group' });
+        tokens.push({ raw: '(', desc: 'Start capturing group', type: 'group', typeLabel: 'Group' });
         i++;
       }
     } else if (ch === ')') {
+      tokens.push({ raw: ')', desc: 'End group boundary', type: 'group', typeLabel: 'Group End' });
       i++;
     } else if (ch === '|') {
-      tokens.push({ raw: '|', desc: 'Logical OR (alternation)' });
+      tokens.push({ raw: '|', desc: 'Logical OR (alternation branch)', type: 'alt', typeLabel: 'Alternation' });
       i++;
     } else if (ch === '*' || ch === '+' || ch === '?') {
       const isLazy = pattern[i + 1] === '?';
       const raw = isLazy ? ch + '?' : ch;
       const descMap = {
-        '*': '0 or more occurrences (greedy)',
-        '*?': '0 or more occurrences (lazy)',
-        '+': '1 or more occurrences (greedy)',
-        '+?': '1 or more occurrences (lazy)',
-        '?': 'Optional: 0 or 1 occurrence',
-        '??': 'Optional: 0 or 1 (lazy)'
+        '*': '0 or more times (greedy)',
+        '*?': '0 or more times (lazy)',
+        '+': '1 or more times (greedy)',
+        '+?': '1 or more times (lazy)',
+        '?': 'Optional: 0 or 1 time (greedy)',
+        '??': 'Optional: 0 or 1 time (lazy)'
       };
-      tokens.push({ raw, desc: descMap[raw] || 'Quantifier' });
+      tokens.push({ raw, desc: descMap[raw] || 'Quantifier', type: 'quant', typeLabel: 'Quantifier' });
       i += isLazy ? 2 : 1;
     } else if (ch === '{') {
       let closeIdx = pattern.indexOf('}', i);
       if (closeIdx === -1) closeIdx = len;
       const quant = pattern.slice(i, closeIdx + 1);
-      tokens.push({ raw: quant, desc: `Repetition quantifier ${quant}` });
+      tokens.push({ raw: quant, desc: `Repetition quantifier ${quant}`, type: 'quant', typeLabel: 'Repetition' });
       i = closeIdx + 1;
     } else {
-      // Gather literal sequence
       let lit = ch;
       i++;
       while (i < len && !/[\\^$.*+?()[\]{}|]/.test(pattern[i])) {
         lit += pattern[i];
         i++;
       }
-      tokens.push({ raw: lit, desc: `Literal text "${lit}"` });
+      tokens.push({ raw: lit, desc: `Literal text "${lit}"`, type: 'literal', typeLabel: 'Literal' });
     }
   }
 

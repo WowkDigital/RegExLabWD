@@ -1755,3 +1755,234 @@ body::before {
   padding: 24px;
   animation: fadeIn 0.2s ease;
 }
+
+
+/* ============================================================
+   FLAG BUTTONS COMPONENT [[Icon] [Flag]]
+   ============================================================ */
+.flags-button-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface2-solid);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 5px;
+}
+
+.flag-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text3);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.flag-btn i {
+  width: 12px;
+  height: 12px;
+}
+
+.flag-btn:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.flag-btn.active {
+  background: rgba(0, 229, 255, 0.15);
+  color: var(--accent);
+  border-color: rgba(0, 229, 255, 0.4);
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.2);
+}
+
+/* Flag name label displayed in Simplified Mode */
+.flag-btn .flag-label {
+  font-size: 10px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: var(--text2);
+  display: inline;
+}
+
+body.compact-mode .flag-btn .flag-label {
+  display: none;
+}
+
+/* Simplified Mode Toggle in Header */
+.simplified-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface2-solid);
+  color: var(--text3);
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.5px;
+}
+
+.simplified-toggle-btn.active {
+  background: rgba(0, 255, 136, 0.12);
+  border-color: rgba(0, 255, 136, 0.4);
+  color: var(--green);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.15);
+}
+
+.simplified-helper-tip {
+  font-size: 11px;
+  color: var(--text2);
+  background: rgba(0, 255, 136, 0.05);
+  border-left: 2px solid var(--green);
+  padding: 4px 8px;
+  margin-top: 6px;
+  border-radius: 0 4px 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+
+/* ============================================================
+   REGEX SYNTAX TOKEN COLORS & HOVER LINKING
+   ============================================================ */
+/* Semantics: Anchor (green), Class (cyan/accent), Quantifier (amber), Group (purple), Lookaround (pink), Alternation (red), Literal (text) */
+.tok-anchor {
+  --tok-color: var(--green);
+  --tok-bg: rgba(0, 255, 136, 0.12);
+  --tok-border: rgba(0, 255, 136, 0.4);
+}
+
+.tok-class {
+  --tok-color: var(--accent);
+  --tok-bg: rgba(0, 229, 255, 0.12);
+  --tok-border: rgba(0, 229, 255, 0.4);
+}
+
+.tok-quant {
+  --tok-color: var(--amber);
+  --tok-bg: rgba(255, 179, 0, 0.12);
+  --tok-border: rgba(255, 179, 0, 0.4);
+}
+
+.tok-group {
+  --tok-color: var(--purple);
+  --tok-bg: rgba(191, 85, 236, 0.12);
+  --tok-border: rgba(191, 85, 236, 0.4);
+}
+
+.tok-lookaround {
+  --tok-color: var(--pink);
+  --tok-bg: rgba(255, 45, 127, 0.12);
+  --tok-border: rgba(255, 45, 127, 0.4);
+}
+
+.tok-alt {
+  --tok-color: var(--red);
+  --tok-bg: rgba(255, 77, 77, 0.12);
+  --tok-border: rgba(255, 77, 77, 0.4);
+}
+
+.tok-literal {
+  --tok-color: var(--text);
+  --tok-bg: rgba(255, 255, 255, 0.05);
+  --tok-border: rgba(255, 255, 255, 0.18);
+}
+
+/* Syntax Mirror ribbon directly under the pattern input */
+.pattern-syntax-mirror {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface2-solid);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-top: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  min-height: 32px;
+}
+
+.mirror-token {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--tok-bg);
+  color: var(--tok-color);
+  border: 1px solid var(--tok-border);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.mirror-token:hover,
+.mirror-token.linked-active {
+  transform: translateY(-2px) scale(1.05);
+  border-color: #ffffff;
+  box-shadow: 0 0 12px var(--tok-color);
+  z-index: 2;
+}
+
+/* Explainer Token Pills with Color Coding */
+.explainer-token-pill {
+  background: var(--tok-bg);
+  border: 1px solid var(--tok-border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.explainer-token-pill:hover,
+.explainer-token-pill.linked-active {
+  transform: translateY(-2px);
+  border-color: #ffffff;
+  box-shadow: 0 0 14px var(--tok-color);
+  background: rgba(255, 255, 255, 0.1);
+  z-index: 2;
+}
+
+.explainer-token-pill .token-type-tag {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--tok-color);
+  font-weight: 700;
+}
+
+.explainer-token-pill .token-raw {
+  color: var(--tok-color);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.explainer-token-pill .token-desc {
+  color: var(--text2);
+  font-size: 11px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
